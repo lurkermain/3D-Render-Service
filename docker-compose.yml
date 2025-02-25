@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
+    networks:
+      - app-network
+    volumes:
+      - ./blender_files:/app/blender_files
+      - ./skins:/app/skins
+      - ./scripts:/app/scripts
+      - ./output:/app/output
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  blender:
+    image: linuxserver/blender:latest
+    runtime: nvidia  # Используем NVIDIA runtime
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all  # Делаем все GPU доступными
+      - NVIDIA_DRIVER_CAPABILITIES=all  # Включаем все возможности драйвера
+    volumes:
+      - ./blender_files:/app/blender_files
+      - ./skins:/app/skins
+      - ./scripts:/app/scripts
+      - ./output:/app/output
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "5002:5001"
+
+networks:
+  app-network:
+    driver: bridge
