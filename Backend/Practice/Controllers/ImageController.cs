@@ -33,16 +33,20 @@ namespace Practice.Controllers
             [FromQuery, SwaggerParameter("Угол поворота света в градусах по горизонтали"), DefaultValue(0), Range(-180, 180)] int angle_light)
         {
             var skin = await _context.Products.FindAsync(id);
-            if (skin?.Image == null || skin.Image.Length == 0)
+            var blend_file = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType == skin.ModelType.ToString());
+            if (!blend_file.IsGlb)
             {
-                return NotFound(new { error = "Текстура не загружена или продукт не найден." });
+                if (skin?.Image == null || skin.Image.Length == 0)
+                {
+                    return BadRequest(new { error = "Текстура не загружена для данной модели." });
+                }
             }
 
-            var blend_file = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType == skin.ModelType.ToString());
             if (blend_file?.Blender_file == null)
             {
                 return NotFound(new { error = "Blender файл не найден." });
             }
+            
 
             var fileManager = new FileManager();
             string hostBlenderPath = fileManager.SaveFile("blender_files", $"model_{id}.blend", blend_file.Blender_file);
@@ -50,7 +54,7 @@ namespace Practice.Controllers
             string hostOutputPath = fileManager.GetFilePath("output", $"rendered_image_{id}.png");
 
             var dockerService = new DockerService();
-            bool renderSuccess = await dockerService.RenderModelInContainer(id, angle_horizontal, angle_vertical, angle_light, lightEnergy);
+            bool renderSuccess = await dockerService.RenderModelInContainer(id, angle_horizontal, angle_vertical, angle_light, lightEnergy, blend_file.IsGlb);
 
             if (!renderSuccess || !System.IO.File.Exists(hostOutputPath))
             {
@@ -79,25 +83,30 @@ namespace Practice.Controllers
         }
 
         [HttpPost("model")]
-        public async Task<IActionResult> AddModel([FromForm] ModelType modeltype, IFormFile Blender_file)
+        public async Task<IActionResult> AddModel([FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
         {
             if (Blender_file == null || Blender_file.Length == 0)
             {
                 return BadRequest(new { error = "Необходимо загрузить .blend" });
             }
 
+            var modelType = await _context.ModelTypes.FirstOrDefaultAsync(m => m.Name == modelTypeName);
+            if (modelType == null)
+            {
+                return BadRequest(new { error = "Тип модели не найден в базе данных." });
+            }
+
             try
             {
-                // Сохранение .gltf файла во временный массив
                 using var blender_filebytes = new MemoryStream();
                 await Blender_file.CopyToAsync(blender_filebytes);
                 byte[] fileBytes = blender_filebytes.ToArray();
 
-                // Создание новой записи модели
                 var newModel = new Blender
                 {
-                    ModelType = modeltype.ToString(),
+                    ModelType = modelType.Name,
                     Blender_file = fileBytes,
+                    IsGlb = isGlb,
                 };
 
                 _context.Blender.Add(newModel);
@@ -110,6 +119,7 @@ namespace Practice.Controllers
                 return StatusCode(500, new { error = $"Ошибка при добавлении модели: {ex.Message}" });
             }
         }
+
 
 
         [HttpGet("{id}/rendered-image")]

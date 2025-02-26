@@ -18,13 +18,14 @@ namespace Practice.Controllers
         public async Task<IActionResult> GetAll()
         {
             var products = await _context.Products
+                .Include(p => p.ModelType) // Включаем связанные данные
                 .Select(p => new ProductUrl
                 {
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
-                    ModelType = p.ModelType,
-                    ImageUrl = Url.Action("GetImage", new { id = p.Id }) // Генерация ссылки на метод GetImage
+                    ModelType = p.ModelType.Name, // Используем имя типа модели
+                    ImageUrl = Url.Action("GetImage", new { id = p.Id })
                 })
                 .ToListAsync();
 
@@ -34,23 +35,25 @@ namespace Practice.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.ModelType) // Включаем связанные данные
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (product == null)
             {
                 return NotFound();
             }
 
-            // Преобразуем данные в DTO
             var productDto = new ProductUrl
             {
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
-                ModelType = product.ModelType,
-                ImageUrl = Url.Action("GetImage", new { id = product.Id }) // Генерация ссылки на метод GetImage
+                ModelType = product.ModelType.Name, // Используем имя типа модели
+                ImageUrl = Url.Action("GetImage", new { id = product.Id })
             };
 
-            return Ok(productDto); // Возвращаем JSON-объект
+            return Ok(productDto);
         }
 
         [HttpGet("{id}/image")]
@@ -67,26 +70,29 @@ namespace Practice.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] ModelType modeltype, IFormFile? image)
+        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] int modelTypeId, IFormFile? image)
         {
             if (image == null || image.Length == 0)
             {
                 return BadRequest("Image file is required.");
             }
 
-            // Читаем изображение в байтовый массив
+            var modelType = await _context.ModelTypes.FindAsync(modelTypeId);
+            if (modelType == null)
+            {
+                return BadRequest("Invalid ModelTypeId.");
+            }
+
             var imageBytes = await FileHelper.ConvertToByteArrayAsync(image);
 
-            // Создаем объект Product
             var product = new Product
             {
                 Name = name,
                 Description = description,
-                ModelType = modeltype.ToString(), // Преобразуем в строку для хранения
+                ModelTypeId = modelTypeId,
                 Image = imageBytes
             };
 
-            // Добавляем в базу данных
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -94,13 +100,18 @@ namespace Practice.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] ModelType modeltype, IFormFile? image)
+        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] int modelTypeId, IFormFile? image)
         {
-
             var existingProduct = await _context.Products.FindAsync(id);
             if (existingProduct == null)
             {
                 return NotFound();
+            }
+
+            var modelType = await _context.ModelTypes.FindAsync(modelTypeId);
+            if (modelType == null)
+            {
+                return BadRequest("Invalid ModelTypeId.");
             }
 
             if (image != null && image.Length > 0)
@@ -111,7 +122,7 @@ namespace Practice.Controllers
 
             existingProduct.Name = name;
             existingProduct.Description = description;
-            existingProduct.ModelType = modeltype.ToString();
+            existingProduct.ModelTypeId = modelTypeId;
 
             _context.Entry(existingProduct).State = EntityState.Modified;
             await _context.SaveChangesAsync();

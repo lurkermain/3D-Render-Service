@@ -13,12 +13,18 @@ namespace Practice.Services
             _client = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
         }
 
-        public async Task<bool> RenderModelInContainer(int id, int angleHorizontal, int angleVertical, int angleLight, int lightEnergy)
+        public async Task<bool> RenderModelInContainer(int id, int angleHorizontal, int angleVertical, int angleLight, int lightEnergy, bool isGlb)
         {
-            string command = $"blender -b /app/blender_files/model_{id}.blend -P /app/scripts/script3.py -- " +
-                             $"--skin /app/skins/skin_{id}.png --output /app/output/rendered_image_{id}.png " +
-                             $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
-                             $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}";
+            string scriptName = isGlb ? "script_glb.py" : "script3.py";
+            string command = isGlb
+                ? $"blender -b /app/blender_files/model_{id}.blend -P /app/scripts/{scriptName} -- " +
+                  $"--output /app/output/rendered_image_{id}.png " +
+                  $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
+                  $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}"
+                : $"blender -b /app/blender_files/model_{id}.blend -P /app/scripts/{scriptName} -- " +
+                  $"--skin /app/skins/skin_{id}.png --output /app/output/rendered_image_{id}.png " +
+                  $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
+                  $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}";
 
             var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
             var container = containers.FirstOrDefault(c => c.Names.Contains("/" + ContainerName));

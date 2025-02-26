@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Practice.Enums;
 
 namespace Practice.Models
 {
@@ -8,9 +9,10 @@ namespace Practice.Models
         public string ?Name { get; set; }
         public string ?Description { get; set; }
 
-        public string ?ModelType { get; set; }
-
         public byte[] ?Image { get; set; }
 
+        public int ModelTypeId { get; set; }
+
+        public ModelTypes ModelType { get; set; }
     }
 }
