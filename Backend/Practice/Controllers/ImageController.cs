@@ -14,56 +14,96 @@ using System.Reflection.Metadata;
 using Docker.DotNet.Models;
 using Docker.DotNet;
 using Practice.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Practice.Controllers
 {
     [ApiController]
     [Route("api/products")]
-    public class ImageController(ApplicationDbContext context) : ControllerBase
+    public class ImageController : ControllerBase
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<ImageController> _logger;
+        private readonly FileManager _fileManager;
+        private readonly DockerService _dockerService;
 
+        public ImageController(
+            ApplicationDbContext context,
+            ILogger<ImageController> logger,
+            FileManager fileManager,
+            DockerService dockerService)
+        {
+            _context = context;
+            _logger = logger;
+            _fileManager = fileManager;
+            _dockerService = dockerService;
+        }
 
         [HttpPut("{id}/render")]
         public async Task<IActionResult> RenderModel(
             int id,
-            [FromQuery, SwaggerParameter("Угол поворота камеры в градусах по горизонтали"), DefaultValue(0), Range(-90, 90)] int angle_horizontal,
-            [FromQuery, SwaggerParameter("Угол поворота камеры в градусах по вертикали"), DefaultValue(0), Range(-90, 90)] int angle_vertical,
-            [FromQuery, SwaggerParameter("Интенсивность света (0-100)"), DefaultValue(50), Range(0, 100)] int lightEnergy,
-            [FromQuery, SwaggerParameter("Угол поворота света в градусах по горизонтали"), DefaultValue(0), Range(-180, 180)] int angle_light)
+            [FromQuery] int angle_horizontal = 0,
+            [FromQuery] int angle_vertical = 0,
+            [FromQuery] int lightEnergy = 50,
+            [FromQuery] int angle_light = 0)
         {
-            var skin = await _context.Products.FindAsync(id);
-            var blend_file = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType == skin.ModelType.ToString());
-            if (!blend_file.IsGlb)
+            try
             {
-                if (skin?.Image == null || skin.Image.Length == 0)
+                _logger.LogInformation($"Начало рендера для продукта с ID: {id}");
+
+                var skin = await _context.Products.FindAsync(id);
+                if (skin == null)
                 {
+                    _logger.LogWarning($"Продукт с ID {id} не найден.");
+                    return NotFound(new { error = "Продукт не найден." });
+                }
+
+                var blend_file = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType != null && p.ModelType == skin.ModelType.ToString());
+                if (blend_file == null)
+                {
+                    _logger.LogWarning($"Blender файл для типа модели {skin.ModelType} не найден.");
+                    return NotFound(new { error = "Blender файл не найден." });
+                }
+
+                if (!blend_file.IsGlb && (skin.Image == null || skin.Image.Length == 0))
+                {
+                    _logger.LogWarning($"Текстура не загружена для продукта с ID {id}.");
                     return BadRequest(new { error = "Текстура не загружена для данной модели." });
                 }
-            }
 
-            if (blend_file?.Blender_file == null)
+                string hostBlenderPath = _fileManager.SaveFile("blender_files", $"model_{id}.blend", blend_file.Blender_file);
+                _logger.LogInformation($"Blender файл сохранен по пути: {hostBlenderPath}");
+
+                string hostSkinPath = null;
+                if (!blend_file.IsGlb)
+                {
+                    hostSkinPath = _fileManager.SaveFile("skins", $"skin_{id}.png", skin.Image);
+                    _logger.LogInformation($"Текстура сохранена по пути: {hostSkinPath}");
+                }
+
+                string hostOutputPath = _fileManager.GetFilePath("output", $"rendered_image_{id}.png");
+                _logger.LogInformation($"Выходной файл будет сохранен по пути: {hostOutputPath}");
+
+                bool renderSuccess = await _dockerService.RenderModelInContainer(id, angle_horizontal, angle_vertical, angle_light, lightEnergy, blend_file.IsGlb);
+
+                if (!renderSuccess || !System.IO.File.Exists(hostOutputPath))
+                {
+                    _logger.LogError($"Ошибка рендера для продукта с ID {id}. Файл не найден или рендер не удался.");
+                    return StatusCode(500, new { error = "Ошибка рендера или файл не найден." });
+                }
+
+                var renderedBytes = await System.IO.File.ReadAllBytesAsync(hostOutputPath);
+                _logger.LogInformation($"Рендер успешно завершен для продукта с ID {id}.");
+
+                return File(renderedBytes, "image/png");
+            }
+            catch (Exception ex)
             {
-                return NotFound(new { error = "Blender файл не найден." });
+                _logger.LogError(ex, $"Ошибка при рендере продукта с ID {id}: {ex.Message}");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
             }
-            
-
-            var fileManager = new FileManager();
-            string hostBlenderPath = fileManager.SaveFile("blender_files", $"model_{id}.blend", blend_file.Blender_file);
-            string hostSkinPath = fileManager.SaveFile("skins", $"skin_{id}.png", skin.Image);
-            string hostOutputPath = fileManager.GetFilePath("output", $"rendered_image_{id}.png");
-
-            var dockerService = new DockerService();
-            bool renderSuccess = await dockerService.RenderModelInContainer(id, angle_horizontal, angle_vertical, angle_light, lightEnergy, blend_file.IsGlb);
-
-            if (!renderSuccess || !System.IO.File.Exists(hostOutputPath))
-            {
-                return StatusCode(500, new { error = "Ошибка рендера или файл не найден." });
-            }
-
-            var renderedBytes = await System.IO.File.ReadAllBytesAsync(hostOutputPath);
-            return File(renderedBytes, "image/png");
         }
+
 
         [HttpGet("models")]
         public async Task<IActionResult> GetModels()
@@ -75,12 +115,12 @@ namespace Practice.Controllers
             return list.Any() ? Ok(list) : NotFound(new { message = "Модель не найдена" });
         }
 
-        [HttpGet("renders")]
+        /*[HttpGet("renders")]
         public async Task<IActionResult> GetRenders()
         {
             var list = await _context.Render.ToListAsync();
             return list.Any() ? Ok(list) : NotFound(new { message = "Модель не найдена" });
-        }
+        }*/
 
         [HttpPost("model")]
         public async Task<IActionResult> AddModel([FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
@@ -122,7 +162,7 @@ namespace Practice.Controllers
 
 
 
-        [HttpGet("{id}/rendered-image")]
+        /*[HttpGet("{id}/rendered-image")]
         public async Task<IActionResult> GetImage(int id)
         {
             var product = await _context.Render.FindAsync(id);
@@ -132,7 +172,7 @@ namespace Practice.Controllers
             }
 
             return File(product.RenderedImage, "image/png");
-        }
+        }*/
 
 
         // Метод для удаления модели из базы данных

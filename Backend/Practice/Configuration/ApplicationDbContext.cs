@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Practice.Enums;
 using Practice.Models;
 
@@ -18,12 +19,19 @@ namespace Practice.Configuration
                 .WithMany(mt => mt.Products)
                 .HasForeignKey(p => p.ModelTypeId);
         }
-
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder
+                .EnableSensitiveDataLogging()
+                .LogTo(Console.WriteLine, LogLevel.Information);
+        }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+
             Database.EnsureCreated();
         }
 
     }
 }
+/*Database.EnsureDeleted();*/

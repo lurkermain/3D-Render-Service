@@ -10,9 +10,10 @@ namespace Practice.Controllers
 {
     [ApiController]
     [Route("api/products")]
-    public class ProductsController(ApplicationDbContext context) : ControllerBase
+    public class ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ProductsController> _logger = logger;
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -70,33 +71,41 @@ namespace Practice.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] int modelTypeId, IFormFile? image)
+        public async Task<IActionResult> Create([FromForm] ProductCreate model)
         {
-            if (image == null || image.Length == 0)
+            try
             {
-                return BadRequest("Image file is required.");
+                if (model.Image == null || model.Image.Length == 0)
+                {
+                    return BadRequest("Image file is required.");
+                }
+
+                var modelType = await _context.ModelTypes.FirstOrDefaultAsync(mt => mt.Name == model.ModelType);
+                if (modelType == null)
+                {
+                    return BadRequest("Invalid ModelType.");
+                }
+
+                var imageBytes = await FileHelper.ConvertToByteArrayAsync(model.Image);
+
+                var product = new Product
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    ModelTypeId = modelType.Id,
+                    Image = imageBytes
+                };
+
+                _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
-
-            var modelType = await _context.ModelTypes.FindAsync(modelTypeId);
-            if (modelType == null)
+            catch (Exception ex)
             {
-                return BadRequest("Invalid ModelTypeId.");
+                _logger.LogError(ex, "Ошибка при создании продукта.");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
             }
-
-            var imageBytes = await FileHelper.ConvertToByteArrayAsync(image);
-
-            var product = new Product
-            {
-                Name = name,
-                Description = description,
-                ModelTypeId = modelTypeId,
-                Image = imageBytes
-            };
-
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return Ok();
         }
 
         [HttpPatch("{id}")]

@@ -3,6 +3,19 @@ import math
 import sys
 import os
 
+# Очистка сцены
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
+
+# Проверяем, доступен ли аддон
+import addon_utils
+addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
+
+# Пробуем импортировать .glb
+bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+
 # Устанавливаем движок рендеринга
 bpy.context.scene.render.engine = 'CYCLES'
 
@@ -34,6 +47,16 @@ if not model:
 
 # Rotate the model
 model.rotation_euler = (0, math.radians(angle_vertical), math.radians(angle_horizontal))
+
+
+# Rendering settings
+bpy.context.scene.cycles.samples = 4
+bpy.context.scene.cycles.use_adaptive_sampling = False
+bpy.context.scene.cycles.use_denoising = False
+bpy.context.scene.cycles.use_fast_gi = False
+bpy.context.scene.render.resolution_x = 1024
+bpy.context.scene.render.resolution_y = 1024
+bpy.context.scene.render.resolution_percentage = 100
 
 # Add camera
 bpy.ops.object.camera_add(location=(8, 0, 1))
