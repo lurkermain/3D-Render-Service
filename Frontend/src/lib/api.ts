@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Product, ProductCreate,  } from '@/lib/types';
 
-const API_URL = 'http://localhost:5000/api/products';
-const IMAGE_API_URL = 'http://localhost:5000/api/products';
+const API_URL = '/api/products';
+const IMAGE_API_URL = '/api/products';
 
 
 export const api = {
