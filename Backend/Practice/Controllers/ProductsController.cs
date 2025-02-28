@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Practice.Configuration;
-using Practice.Enums;
 using Practice.Helpers;
 using Practice.Models;
 
@@ -19,13 +18,12 @@ namespace Practice.Controllers
         public async Task<IActionResult> GetAll()
         {
             var products = await _context.Products
-                .Include(p => p.ModelType) // Включаем связанные данные
                 .Select(p => new ProductUrl
                 {
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
-                    ModelType = p.ModelType.Name, // Используем имя типа модели
+                    ModelType = p.ModelType, // Используем имя типа модели
                     ImageUrl = Url.Action("GetImage", new { id = p.Id })
                 })
                 .ToListAsync();
@@ -37,7 +35,6 @@ namespace Practice.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _context.Products
-                .Include(p => p.ModelType) // Включаем связанные данные
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null)
@@ -50,7 +47,7 @@ namespace Practice.Controllers
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
-                ModelType = product.ModelType.Name, // Используем имя типа модели
+                ModelType = product.ModelType, // Используем имя типа модели
                 ImageUrl = Url.Action("GetImage", new { id = product.Id })
             };
 
@@ -71,28 +68,28 @@ namespace Practice.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] ProductCreate model)
+        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] string modeltype, IFormFile? image)
         {
             try
             {
-                if (model.Image == null || model.Image.Length == 0)
+                if (image == null || image.Length == 0)
                 {
                     return BadRequest("Image file is required.");
                 }
 
-                var modelType = await _context.ModelTypes.FirstOrDefaultAsync(mt => mt.Name == model.ModelType);
+                var modelType = await _context.ModelTypes.FirstOrDefaultAsync(mt => mt.Name == modeltype);
                 if (modelType == null)
                 {
                     return BadRequest("Invalid ModelType.");
                 }
 
-                var imageBytes = await FileHelper.ConvertToByteArrayAsync(model.Image);
+                var imageBytes = await FileHelper.ConvertToByteArrayAsync(image);
 
                 var product = new Product
                 {
-                    Name = model.Name,
-                    Description = model.Description,
-                    ModelTypeId = modelType.Id,
+                    Name = name,
+                    Description = description,
+                    ModelType = modelType.Name,
                     Image = imageBytes
                 };
 
@@ -109,18 +106,12 @@ namespace Practice.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] int modelTypeId, IFormFile? image)
+        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] string modelType, IFormFile? image)
         {
             var existingProduct = await _context.Products.FindAsync(id);
             if (existingProduct == null)
             {
                 return NotFound();
-            }
-
-            var modelType = await _context.ModelTypes.FindAsync(modelTypeId);
-            if (modelType == null)
-            {
-                return BadRequest("Invalid ModelTypeId.");
             }
 
             if (image != null && image.Length > 0)
@@ -131,7 +122,7 @@ namespace Practice.Controllers
 
             existingProduct.Name = name;
             existingProduct.Description = description;
-            existingProduct.ModelTypeId = modelTypeId;
+            existingProduct.ModelType = modelType;
 
             _context.Entry(existingProduct).State = EntityState.Modified;
             await _context.SaveChangesAsync();

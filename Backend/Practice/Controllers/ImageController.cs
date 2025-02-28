@@ -6,7 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using Practice.Helpers;
-using Practice.Enums;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -20,24 +19,16 @@ namespace Practice.Controllers
 {
     [ApiController]
     [Route("api/products")]
-    public class ImageController : ControllerBase
+    public class ImageController(
+        ApplicationDbContext context,
+        ILogger<ImageController> logger,
+        FileManager fileManager,
+        DockerService dockerService) : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<ImageController> _logger;
-        private readonly FileManager _fileManager;
-        private readonly DockerService _dockerService;
-
-        public ImageController(
-            ApplicationDbContext context,
-            ILogger<ImageController> logger,
-            FileManager fileManager,
-            DockerService dockerService)
-        {
-            _context = context;
-            _logger = logger;
-            _fileManager = fileManager;
-            _dockerService = dockerService;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ImageController> _logger = logger;
+        private readonly FileManager _fileManager = fileManager;
+        private readonly DockerService _dockerService = dockerService;
 
         [HttpPut("{id}/render")]
         public async Task<IActionResult> RenderModel(
@@ -109,18 +100,11 @@ namespace Practice.Controllers
         public async Task<IActionResult> GetModels()
         {
             var list = await _context.Blender
-                .Select(p => new Blender { Id = p.Id, ModelType = p.ModelType })
+                .Select(p => new Blender { Id = p.Id, ModelType = p.ModelType, IsGlb = p.IsGlb })
                 .ToListAsync();
 
             return list.Any() ? Ok(list) : NotFound(new { message = "Модель не найдена" });
         }
-
-        /*[HttpGet("renders")]
-        public async Task<IActionResult> GetRenders()
-        {
-            var list = await _context.Render.ToListAsync();
-            return list.Any() ? Ok(list) : NotFound(new { message = "Модель не найдена" });
-        }*/
 
         [HttpPost("model")]
         public async Task<IActionResult> AddModel([FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
@@ -159,20 +143,6 @@ namespace Practice.Controllers
                 return StatusCode(500, new { error = $"Ошибка при добавлении модели: {ex.Message}" });
             }
         }
-
-
-
-        /*[HttpGet("{id}/rendered-image")]
-        public async Task<IActionResult> GetImage(int id)
-        {
-            var product = await _context.Render.FindAsync(id);
-            if (product == null || product.RenderedImage == null)
-            {
-                return NotFound();
-            }
-
-            return File(product.RenderedImage, "image/png");
-        }*/
 
 
         // Метод для удаления модели из базы данных
