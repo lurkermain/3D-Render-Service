@@ -1,5 +1,6 @@
 ﻿using Docker.DotNet.Models;
 using Docker.DotNet;
+using System.Diagnostics;
 
 namespace Practice.Services
 {
@@ -8,6 +9,7 @@ namespace Practice.Services
         private readonly DockerClient _client;
         private readonly ILogger<DockerService> _logger;
         private const string ContainerName = "practicdocker-main-blender-1";
+        private const string ContainerId = "7478bacb338484af5c55c0c2c5471de59f906c5e8ad3a98104c2df005f9b409c";
 
         public DockerService(ILogger<DockerService> logger)
         {
@@ -22,46 +24,48 @@ namespace Practice.Services
                 _logger.LogInformation($"Начало рендера модели с ID: {id}, IsGlb: {isGlb}");
 
                 string scriptName = isGlb ? "script_glb.py" : "script3.py";
+                string modelFile = isGlb ? $"model_{id}.glb" : $"model_{id}.blend";
+
                 string command = isGlb
-                    ? $"blender -b /app/blender_files/model_{id}.blend -P /app/scripts/{scriptName} -- " +
+                    ? $"blender -b -P /app/scripts/{scriptName} -- " +
+                      $"--input /app/blender_files/{modelFile} " +
                       $"--output /app/output/rendered_image_{id}.png " +
                       $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
                       $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}"
-                    : $"blender -b /app/blender_files/model_{id}.blend -P /app/scripts/{scriptName} -- " +
+                    : $"blender -b /app/blender_files/{modelFile} -P /app/scripts/{scriptName} -- " +
                       $"--skin /app/skins/skin_{id}.png --output /app/output/rendered_image_{id}.png " +
                       $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
                       $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}";
 
                 _logger.LogInformation($"Команда для выполнения в контейнере: {command}");
 
-                var containers = await _client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
-                var container = containers.FirstOrDefault(c => c.Names.Contains("/" + ContainerName));
-                if (container == null)
-                {
-                    _logger.LogError($"Контейнер с именем {ContainerName} не найден.");
-                    return false;
-                }
+                var sw = Stopwatch.StartNew();
 
-                _logger.LogInformation($"Контейнер найден: ID = {container.ID}, Status = {container.Status}");
-
-                var execCreateResponse = await _client.Exec.ExecCreateContainerAsync(container.ID, new ContainerExecCreateParameters
+                // 2. Запуск команды
+                sw.Restart();
+                var execCreateResponse = await _client.Exec.ExecCreateContainerAsync(ContainerId, new ContainerExecCreateParameters
                 {
                     Cmd = new List<string> { "sh", "-c", command },
                     AttachStdout = true,
                     AttachStderr = true
                 });
+                sw.Stop();
+                _logger.LogInformation($"Создание exec-команды заняло: {sw.ElapsedMilliseconds} мс");
 
                 _logger.LogInformation($"Создана команда для выполнения в контейнере: ExecID = {execCreateResponse.ID}");
 
                 await _client.Exec.StartContainerExecAsync(execCreateResponse.ID, CancellationToken.None);
 
                 var execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
+                // 3. Ожидание завершения
+                sw.Restart();
                 while (execInspect.Running)
                 {
-                    _logger.LogInformation($"Команда выполняется: ExecID = {execCreateResponse.ID}, Running = {execInspect.Running}");
-                    await Task.Delay(500);
+                    await Task.Delay(1);
                     execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
                 }
+                sw.Stop();
+                _logger.LogInformation($"Ожидание завершения заняло: {sw.ElapsedMilliseconds} мс");
 
                 _logger.LogInformation($"Команда завершена: ExecID = {execCreateResponse.ID}, ExitCode = {execInspect.ExitCode}");
 

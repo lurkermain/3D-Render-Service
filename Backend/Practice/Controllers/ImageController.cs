@@ -32,11 +32,11 @@ namespace Practice.Controllers
 
         [HttpPut("{id}/render")]
         public async Task<IActionResult> RenderModel(
-            int id,
-            [FromQuery] int angle_horizontal = 0,
-            [FromQuery] int angle_vertical = 0,
-            [FromQuery] int lightEnergy = 50,
-            [FromQuery] int angle_light = 0)
+    int id,
+    [FromQuery] int angle_horizontal = 0,
+    [FromQuery] int angle_vertical = 0,
+    [FromQuery] int lightEnergy = 50,
+    [FromQuery] int angle_light = 0)
         {
             try
             {
@@ -56,14 +56,23 @@ namespace Practice.Controllers
                     return NotFound(new { error = "Blender файл не найден." });
                 }
 
-                if (!blend_file.IsGlb && (skin.Image == null || skin.Image.Length == 0))
+                string hostModelPath;
+                if (blend_file.IsGlb)
                 {
-                    _logger.LogWarning($"Текстура не загружена для продукта с ID {id}.");
-                    return BadRequest(new { error = "Текстура не загружена для данной модели." });
+                    hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.glb", blend_file.Blender_file);
+                    _logger.LogInformation($"GLB файл сохранен по пути: {hostModelPath}");
                 }
+                else
+                {
+                    if (skin.Image == null || skin.Image.Length == 0)
+                    {
+                        _logger.LogWarning($"Текстура не загружена для продукта с ID {id}.");
+                        return BadRequest(new { error = "Текстура не загружена для данной модели." });
+                    }
 
-                string hostBlenderPath = _fileManager.SaveFile("blender_files", $"model_{id}.blend", blend_file.Blender_file);
-                _logger.LogInformation($"Blender файл сохранен по пути: {hostBlenderPath}");
+                    hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.blend", blend_file.Blender_file);
+                    _logger.LogInformation($"Blender файл сохранен по пути: {hostModelPath}");
+                }
 
                 string hostSkinPath = null;
                 if (!blend_file.IsGlb)
@@ -94,6 +103,7 @@ namespace Practice.Controllers
                 return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
             }
         }
+
 
 
         [HttpGet("models")]
