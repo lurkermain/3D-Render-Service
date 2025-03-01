@@ -27,12 +27,12 @@ namespace Practice.Services
                 string modelFile = isGlb ? $"model_{id}.glb" : $"model_{id}.blend";
 
                 string command = isGlb
-                    ? $"blender -b -P /app/scripts/{scriptName} -- " +
+                    ? $"blender -noaudio -b -P /app/scripts/{scriptName} -- " +
                       $"--input /app/blender_files/{modelFile} " +
                       $"--output /app/output/rendered_image_{id}.png " +
                       $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
                       $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}"
-                    : $"blender -b /app/blender_files/{modelFile} -P /app/scripts/{scriptName} -- " +
+                    : $"blender -noaudio -b /app/blender_files/{modelFile} -P /app/scripts/{scriptName} -- " +
                       $"--skin /app/skins/skin_{id}.png --output /app/output/rendered_image_{id}.png " +
                       $"--angle_light {angleLight} --angle_vertical {angleVertical} " +
                       $"--angle_horizontal {angleHorizontal} --lightEnergy {lightEnergy}";
@@ -55,13 +55,14 @@ namespace Practice.Services
                 _logger.LogInformation($"Создана команда для выполнения в контейнере: ExecID = {execCreateResponse.ID}");
 
                 await _client.Exec.StartContainerExecAsync(execCreateResponse.ID, CancellationToken.None);
-
-                var execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
-                // 3. Ожидание завершения
                 sw.Restart();
+                var execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
+
+                // 3. Ожидание завершения
+
                 while (execInspect.Running)
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(500);
                     execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
                 }
                 sw.Stop();
