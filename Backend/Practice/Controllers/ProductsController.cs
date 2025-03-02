@@ -77,7 +77,7 @@ namespace Practice.Controllers
                     return BadRequest("Image file is required.");
                 }
 
-                var modelType = await _context.ModelTypes.FirstOrDefaultAsync(mt => mt.Name == modeltype);
+                var modelType = await _context.Blender.FirstOrDefaultAsync(mt => mt.ModelType == modeltype);
                 if (modelType == null)
                 {
                     return BadRequest("Invalid ModelType.");
@@ -89,7 +89,7 @@ namespace Practice.Controllers
                 {
                     Name = name,
                     Description = description,
-                    ModelType = modelType.Name,
+                    ModelType = modelType.ModelType,
                     Image = imageBytes
                 };
 

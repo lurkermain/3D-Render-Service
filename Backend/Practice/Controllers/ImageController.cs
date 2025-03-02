@@ -116,18 +116,47 @@ namespace Practice.Controllers
             return list.Any() ? Ok(list) : NotFound(new { message = "Модель не найдена" });
         }
 
+
+        [HttpPatch("model/{id}")]
+        public async Task<IActionResult> UpdateModel(int id, [FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
+        {
+            var existingModel = await _context.Blender.FirstOrDefaultAsync(m => m.Id == id);
+            if (existingModel == null)
+            {
+                return NotFound(new { error = "Модель не найдена." });
+            }
+
+            try
+            {
+                if (Blender_file != null && Blender_file.Length > 0)
+                {
+                    using var blender_filebytes = new MemoryStream();
+                    await Blender_file.CopyToAsync(blender_filebytes);
+                    existingModel.Blender_file = blender_filebytes.ToArray();
+                }
+
+                existingModel.ModelType = modelTypeName;
+                existingModel.IsGlb = isGlb;
+
+                _context.Blender.Update(existingModel);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { id = existingModel.Id, message = "Модель успешно обновлена." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Ошибка при обновлении модели: {ex.Message}" });
+            }
+        }
+
+
+
         [HttpPost("model")]
         public async Task<IActionResult> AddModel([FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
         {
             if (Blender_file == null || Blender_file.Length == 0)
             {
                 return BadRequest(new { error = "Необходимо загрузить .blend" });
-            }
-
-            var modelType = await _context.ModelTypes.FirstOrDefaultAsync(m => m.Name == modelTypeName);
-            if (modelType == null)
-            {
-                return BadRequest(new { error = "Тип модели не найден в базе данных." });
             }
 
             try
@@ -138,7 +167,7 @@ namespace Practice.Controllers
 
                 var newModel = new Blender
                 {
-                    ModelType = modelType.Name,
+                    ModelType = modelTypeName,
                     Blender_file = fileBytes,
                     IsGlb = isGlb,
                 };
