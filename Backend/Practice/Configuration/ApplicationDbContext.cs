@@ -9,7 +9,6 @@ namespace Practice.Configuration
         public DbSet<Product> Products { get; set; }
 
         public DbSet<Blender> Blender{ get; set; }
-        public DbSet<ModelTypes> ModelTypes { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
