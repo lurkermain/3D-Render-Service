@@ -118,7 +118,7 @@ namespace Practice.Controllers
 
 
         [HttpPatch("model/{id}")]
-        public async Task<IActionResult> UpdateModel(int id, [FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
+        public async Task<IActionResult> UpdateModel(int id, [FromForm] string modelTypeName, IFormFile? Blender_file, bool isGlb)
         {
             var existingModel = await _context.Blender.FirstOrDefaultAsync(m => m.Id == id);
             if (existingModel == null)

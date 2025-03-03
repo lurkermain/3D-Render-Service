@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { Card } from "@/components/ui/card";
-import { Input } from "../ui/input";
+import { Input } from "@/components/ui/input";
 
 interface ProductImageProps {
   imagePreview: string;

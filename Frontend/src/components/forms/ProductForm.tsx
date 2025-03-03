@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Product } from '../../lib/types';
+import { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '../../lib/api';
-import { ProductBasicInfo } from '../product/ProductBasicInfo';
-import { RenderSettings } from '../render-settings/RenderSettings';
-import { ProductImage } from '../product/ProductImage';
-import { ActionButtons } from '../ui/action-buttons';
-import { Separator } from "@/components/ui/separator"
+import { api } from '@/lib/api';
+import { ProductBasicInfo } from '@/components/product/ProductBasicInfo';
+import { RenderSettings } from '@/components/render-settings/RenderSettings';
+import { ProductImage } from '@/components/product/ProductImage';
+import { ActionButtons } from '@/components/ui/action-buttons';
+import { Separator } from "@/components/ui/separator";
 
 interface ProductFormProps {
   product: Product | null;
@@ -16,20 +16,23 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFormProps) {
-  const [name, setName] = useState(product?.name ?? '');
-  const [description, setDescription] = useState(product?.description ?? '');
-  const [modelType, setModelType] = useState(product?.modelType ?? '');
+  const [productInfo, setProductInfo] = useState({
+    name: product?.name ?? '',
+    description: product?.description ?? '',
+    modelType: product?.modelType ?? '',
+  });
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(product ? api.getImageUrl(product.id) : '');
   const { toast } = useToast();
 
-  // Обновление imagePreview, если product изменился
   useEffect(() => {
     if (product) {
-      setName(product.name);
-      setDescription(product.description);
-      setModelType(product.modelType);
-      setImagePreview(api.getImageUrl(product.id)); // Обновляем превью с URL
+      setProductInfo({
+        name: product.name,
+        description: product.description,
+        modelType: product.modelType,
+      });
+      setImagePreview(api.getImageUrl(product.id));
     }
   }, [product]);
 
@@ -38,11 +41,11 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
     if (!product) return;
 
     try {
-      const updatedProduct = { name, description, modelType, image };
+      const updatedProduct = { ...productInfo, image };
       await api.updateProduct(product.id, updatedProduct);
       const freshProduct = await api.getProductById(product.id);
       await onSubmit(freshProduct);
-      onClose(); // Закрываем форму после успешного сохранения
+      onClose();
     } catch (error) {
       toast({ 
         title: 'Ошибка', 
@@ -58,9 +61,9 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
       setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string); // Обновляем превью изображения
+        setImagePreview(reader.result as string);
       };
-      reader.readAsDataURL(file); // Читаем файл как Data URL для превью
+      reader.readAsDataURL(file);
     }
   };
 
@@ -79,7 +82,10 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
         />
       </div>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <ProductBasicInfo {...{ name, description, modelType, setName, setDescription, setModelType }} />
+        <ProductBasicInfo 
+          productInfo={productInfo} 
+          setProductInfo={setProductInfo} 
+        />
         <ProductImage {...{ imagePreview, handleImageUpload }} />
       </div>
       <Separator className="my-6" />

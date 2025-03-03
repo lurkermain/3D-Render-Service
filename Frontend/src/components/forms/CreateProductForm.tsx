@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { ProductCreate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { ProductBasicInfo } from '../product/ProductBasicInfo';
-import { ProductImage } from '../product/ProductImage';
-import { ActionButtons } from '../ui/action-buttons';
+import { ProductBasicInfo } from '@/components/product/ProductBasicInfo';
+import { ProductImage } from '@/components/product/ProductImage';
+import { ActionButtons } from '@/components/ui/action-buttons';
 
 interface CreateProductFormProps {
   onSubmit: (product: ProductCreate) => Promise<void>;
@@ -11,9 +11,11 @@ interface CreateProductFormProps {
 }
 
 export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [modelType, setModelType] = useState('');
+  const [productInfo, setProductInfo] = useState({
+    name:  '',
+    description:  '',
+    modelType: '',
+  });
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('/placeholder.svg');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +35,7 @@ export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps
   };
 
   const validateForm = () => {
-    if (!name.trim()) {
+    if (!productInfo.name.trim()) {
       toast({ 
         title: 'Ошибка', 
         description: 'Название товара обязательно', 
@@ -41,11 +43,23 @@ export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps
       });
       return false;
     }
-    if (!description.trim()) {
+    if (!productInfo.description.trim()) { // Исправленное условие
       toast({ 
         title: 'Ошибка', 
         description: 'Описание товара обязательно', 
         variant: 'destructive' 
+      });
+      return false;
+    }
+    if (!productInfo.modelType) { // Проверка на выбор упаковки
+      toast({ title: 'Ошибка', description: 'Выберите тип упаковки', variant: 'destructive' });
+      return false;
+    }
+    if (!image) {
+      toast({
+        title: 'Ошибка',
+        description: 'Изображение товара обязательно',
+        variant: 'destructive'
       });
       return false;
     }
@@ -54,14 +68,15 @@ export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(validateForm())
     
     if (isSubmitting) return;
     if (!validateForm()) return;
 
     const productData: ProductCreate = { 
-      name: name.trim(), 
-      description: description.trim(), 
-      modelType, 
+      name: productInfo.name.trim(), 
+      description: productInfo.description.trim(), 
+      modelType: productInfo.modelType, 
       image 
     };
 
@@ -109,15 +124,10 @@ export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <ProductBasicInfo
-            name={name}
-            description={description}
-            modelType={modelType}
-            setName={setName}
-            setDescription={setDescription}
-            setModelType={setModelType}
-            // disabled={isSubmitting}
-          />
+        <ProductBasicInfo 
+          productInfo={productInfo} 
+          setProductInfo={setProductInfo} 
+        />
         </div>
 
         <div className="space-y-6">
