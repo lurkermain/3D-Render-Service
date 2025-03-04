@@ -150,7 +150,6 @@ namespace Practice.Controllers
         }
 
 
-
         [HttpPost("model")]
         public async Task<IActionResult> AddModel([FromForm] string modelTypeName, IFormFile Blender_file, bool isGlb)
         {
