@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { ModelManageDialog } from "./ModelManageDialog";
 import { ModelSwitcher } from '@/components/model-settings/ModelSwitcher';
@@ -35,17 +34,17 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
     }
   };
 
-  const handleSaveModel = async (modelData: { id?: number; name: string; file?: File }) => {
+  const handleSaveModel = async (modelData: { id?: number; name: string; file?: File; isGlb: boolean }) => {
     try {
       if (modelData.id) {
-        await updateModel(modelData.id, modelData.name, modelData.file || undefined, false);
+        await updateModel(modelData.id, modelData.name, modelData.file || undefined, modelData.isGlb);
         // Если редактируемая модель была выбрана, обновляем значение `value`
         if (value === modelData.id.toString()) {
           onChange(modelData.name); // Обновляем значение `value` на новое имя модели
         }
       } else {
         if (!modelData.file) return; // Файл обязателен только для новой модели
-        await addModel(modelData.name, modelData.file, false);
+        await addModel(modelData.name, modelData.file, modelData.isGlb);
       }
       setIsModelDialogOpen(false);
     } catch (error) {

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-
 interface Model {
   id: number
   modelType: string
@@ -17,19 +16,22 @@ interface ModelManageDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   model?: Model
-  onSave: (model: { id?: number; name: string; file?: File }) => void
+  onSave: (model: { id?: number; name: string; file?: File; isGlb: boolean }) => void
   // onDelete?: () => void
 }
 
 export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelManageDialogProps) {
   const [modelName, setModelName] = useState(model?.modelType || "")
   const [modelFile, setModelFile] = useState<File | null>(null)
-
+  const [isGlb, setIsGlb] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setModelFile(selectedFile)
+      // Проверяем расширение файла
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase()
+      setIsGlb(fileExtension === 'glb')
     }
   }
 
@@ -37,7 +39,6 @@ export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelMa
     setModelName(model?.modelType || "")
   }, [model])
 
-  console.log(model)
   const handleSave = () => {
     if (!modelName || (!modelFile && !model)) {
       alert("Введите название модели и выберите файл!")
@@ -47,6 +48,7 @@ export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelMa
       id: model?.id,
       name: modelName,
       file: modelFile || model?.file,
+      isGlb: isGlb
     })
     onOpenChange(false)
   }

@@ -5,7 +5,6 @@ import { Product, ProductCreate,  BlenderModel} from '@/lib/types';
 const API_URL = '/api/products';
 const IMAGE_API_URL = '/api/products';
 
-
 export const api = {
   // Получение всех продуктов
   getAllProducts: async (): Promise<Product[]> => {
@@ -104,7 +103,7 @@ export const api = {
     if (blenderFile) formData.append("Blender_file", blenderFile);
     if (isGlb !== undefined) formData.append("isGlb", isGlb.toString());
 
-    await axios.patch(`${API_URL}/model/${id}`, formData, {
+    await axios.patch(`${API_URL}/model/${id}?isGlb=${isGlb}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
@@ -113,6 +112,5 @@ export const api = {
   deleteModel: async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/${id}/model`);
   },
-  
   
 };
