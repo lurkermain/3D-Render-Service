@@ -9,7 +9,7 @@ namespace Practice.Services
         private readonly DockerClient _client;
         private readonly ILogger<DockerService> _logger;
         private const string ContainerName = "practicdocker-main-blender-1";
-        private const string ContainerId = "7478bacb338484af5c55c0c2c5471de59f906c5e8ad3a98104c2df005f9b409c";
+        private const string ContainerId = "27abde38a9b5235f5bc7dfc48b9c092370a5d3d36b5612338714c10d96ab9b7b";
 
         public DockerService(ILogger<DockerService> logger)
         {

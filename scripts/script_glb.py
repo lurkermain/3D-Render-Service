@@ -1,20 +1,18 @@
 import bpy
 import math
-import sys
 import os
+import sys
 
 # Очистка сцены
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
 bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
 
-
 # Проверяем, доступен ли аддон
 import addon_utils
 addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
 
-# Пробуем импортировать .glb
-bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+
 
 # Устанавливаем движок рендеринга
 bpy.context.scene.render.engine = 'CYCLES'
@@ -37,19 +35,26 @@ angle_horizontal = float(args_dict.get('angle_horizontal', 0))
 lightEnergy = float(args_dict.get('lightEnergy', 50))
 output_path = args_dict.get('output')
 
+# Пробуем импортировать .glb
+bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+
+
 if not output_path:
     raise ValueError("Missing required argument: --output")
-
-# Find the first mesh in the scene
+    
+# Находим первый меш в сцене
 model = next((obj for obj in bpy.context.scene.objects if obj.type == 'MESH'), None)
 if not model:
-    raise RuntimeError("No mesh object found in the scene.")
+    raise RuntimeError("Меш объект не найден в сцене.")
 
-# Rotate the model
-model.rotation_euler = (0, math.radians(angle_vertical), math.radians(angle_horizontal))
+bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
+model.location[2] = 0.5
 
+# Вращаем модель
+bpy.ops.transform.rotate(value=angle_vertical, orient_axis='Y')
+bpy.ops.transform.rotate(value=angle_horizontal, orient_axis='Z')
 
-# Rendering settings
+# Настройки рендеринга
 bpy.context.scene.cycles.samples = 4
 bpy.context.scene.cycles.use_adaptive_sampling = False
 bpy.context.scene.cycles.use_denoising = False
@@ -58,25 +63,25 @@ bpy.context.scene.render.resolution_x = 1024
 bpy.context.scene.render.resolution_y = 1024
 bpy.context.scene.render.resolution_percentage = 100
 
-# Add camera
-bpy.ops.object.camera_add(location=(8, 0, 1))
+# Добавление камеры
+bpy.ops.object.camera_add(location=(1.1, 0, 0.4))
 camera = bpy.context.object
 bpy.context.scene.camera = camera
 direction = model.location - camera.location
 camera.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
 
-# Add light
-light_radius = 8
+# Добавление света
+light_radius = 4
 light_x = light_radius * math.cos(math.radians(angle_light))
 light_y = light_radius * math.sin(math.radians(angle_light))
-light_z = 5
+light_z = 0.5
 
 bpy.ops.object.light_add(type='POINT', location=(light_x, light_y, light_z))
 light = bpy.context.object
 light.data.energy = lightEnergy * 25
 light.data.use_shadow = True
 
-# Render output
+# Сохранение рендера
 bpy.context.scene.render.filepath = output_path
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
