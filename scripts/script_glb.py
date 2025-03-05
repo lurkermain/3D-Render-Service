@@ -12,8 +12,7 @@ bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursi
 import addon_utils
 addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
 
-# Пробуем импортировать .glb
-bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+
 
 # Устанавливаем движок рендеринга
 bpy.context.scene.render.engine = 'CYCLES'
@@ -35,6 +34,10 @@ angle_vertical = float(args_dict.get('angle_vertical', 0))
 angle_horizontal = float(args_dict.get('angle_horizontal', 0))
 lightEnergy = float(args_dict.get('lightEnergy', 50))
 output_path = args_dict.get('output')
+
+# Пробуем импортировать .glb
+bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+
 
 if not output_path:
     raise ValueError("Missing required argument: --output")

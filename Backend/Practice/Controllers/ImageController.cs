@@ -134,11 +134,19 @@ namespace Practice.Controllers
                     await Blender_file.CopyToAsync(blender_filebytes);
                     existingModel.Blender_file = blender_filebytes.ToArray();
                 }
-
+                string oldModelType = existingModel.ModelType;
                 existingModel.ModelType = modelTypeName;
                 existingModel.IsGlb = isGlb;
 
+                var productUpdate = await _context.Products.Where(w => w.ModelType == oldModelType).ToListAsync();
+
+                foreach (var product in productUpdate)
+                {
+                    product.ModelType = modelTypeName;
+                }
+
                 _context.Blender.Update(existingModel);
+                _context.Products.UpdateRange(productUpdate);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { id = existingModel.Id, message = "Модель успешно обновлена." });
