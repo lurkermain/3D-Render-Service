@@ -12,8 +12,6 @@ bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursi
 import addon_utils
 addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
 
-
-
 # Устанавливаем движок рендеринга
 bpy.context.scene.render.engine = 'CYCLES'
 
@@ -24,31 +22,44 @@ for device in bpy.context.preferences.addons['cycles'].preferences.devices:
     device.use = True
 bpy.context.scene.cycles.device = 'GPU'
 
-# Extract arguments manually after '--'
+# Извлечение аргументов командной строки
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 args_dict = {args[i].lstrip('--'): args[i + 1] for i in range(0, len(args), 2)}
 
-# Assign arguments to variables
-angle_light = float(args_dict.get('angle_light', 0))
-angle_vertical = float(args_dict.get('angle_vertical', 0))
-angle_horizontal = float(args_dict.get('angle_horizontal', 0))
-lightEnergy = float(args_dict.get('lightEnergy', 50))
+# Назначение аргументов
+model_path = args_dict.get('input')
 output_path = args_dict.get('output')
+angle_light = math.radians(float(args_dict.get('angle_light', 0)))
+angle_vertical = math.radians(float(args_dict.get('angle_vertical', 0)))
+angle_horizontal = math.radians(float(args_dict.get('angle_horizontal', 0)))
+lightEnergy = float(args_dict.get('lightEnergy', 50))
 
-# Пробуем импортировать .glb
-bpy.ops.import_scene.gltf(filepath="/app/blender_files/paket.glb")
+if not model_path or not output_path:
+    raise ValueError("Отсутствует обязательный аргумент: --input или --output")
 
+# Импорт модели
+if model_path.endswith(".glb") or model_path.endswith(".gltf"):
+    bpy.ops.import_scene.gltf(filepath=model_path)
+elif model_path.endswith(".blend"):
+    bpy.ops.wm.open_mainfile(filepath=model_path)
+else:
+    raise ValueError(f"Неподдерживаемый формат файла: {model_path}")
 
-if not output_path:
-    raise ValueError("Missing required argument: --output")
-    
 # Находим первый меш в сцене
 model = next((obj for obj in bpy.context.scene.objects if obj.type == 'MESH'), None)
 if not model:
     raise RuntimeError("Меш объект не найден в сцене.")
 
+# Масштабируем модель до стандартного размера
+scale_factor = 1.0 / max(model.dimensions)  # Нормализуем по максимальному размеру
+model.scale = (scale_factor, scale_factor, scale_factor)
+
+# Применяем трансформации
+bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+# Устанавливаем положение модели
 bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
-model.location[2] = 0.5
+model.location = (0, 0, 0.5)
 
 # Вращаем модель
 bpy.ops.transform.rotate(value=angle_vertical, orient_axis='Y')
@@ -64,7 +75,7 @@ bpy.context.scene.render.resolution_y = 1024
 bpy.context.scene.render.resolution_percentage = 100
 
 # Добавление камеры
-bpy.ops.object.camera_add(location=(1.1, 0, 0.4))
+bpy.ops.object.camera_add(location=(3, 0, 1))
 camera = bpy.context.object
 bpy.context.scene.camera = camera
 direction = model.location - camera.location
