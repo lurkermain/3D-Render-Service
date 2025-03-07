@@ -82,7 +82,7 @@ direction = model.location - camera.location
 camera.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
 
 # Добавление света
-light_radius = 4
+light_radius = 5
 light_x = light_radius * math.cos(math.radians(angle_light))
 light_y = light_radius * math.sin(math.radians(angle_light))
 light_z = 0.5
