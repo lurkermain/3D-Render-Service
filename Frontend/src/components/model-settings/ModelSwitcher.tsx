@@ -27,6 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge"
+
+
 
 export interface ComboboxOption {
   value: string;
@@ -102,6 +105,17 @@ export function ModelSwitcher({
                       <Check className={cn("mr-2 h-4 w-4", value === option.modelType ? "opacity-100" : "opacity-0")} />
                       {option.modelType}
                     </div>
+                    {option.isGlb && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "ml-2 text-xs",
+                          
+                          )}
+                        >
+                          glb
+                        </Badge>
+                      )}
                     {showModelActions && (onEditModel || onDeleteModel) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

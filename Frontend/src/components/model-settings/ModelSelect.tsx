@@ -4,10 +4,12 @@ import { ModelManageDialog } from "./ModelManageDialog";
 import { ModelSwitcher } from '@/components/model-settings/ModelSwitcher';
 import { useModels } from "@/hooks/useModels";
 
+
 interface Model {
   id: number;
   modelType: string;
   file: File;
+  isGlb: boolean; // Добавляем isGlb в интерфейс модели
 }
 
 interface ModelSelectProps {
@@ -20,6 +22,9 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
   const [isModelDialogOpen, setIsModelDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const { models, addModel, updateModel, deleteModel } = useModels();
+
+
+
 
   const handleAddModel = () => {
     setEditingModel(null);
@@ -37,7 +42,12 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
   const handleSaveModel = async (modelData: { id?: number; name: string; file?: File; isGlb: boolean }) => {
     try {
       if (modelData.id) {
-        await updateModel(modelData.id, modelData.name, modelData.file || undefined, modelData.isGlb);
+        // Если файл не загружен, используем текущее значение isGlb из редактируемой модели
+        const currentModel = models.find((m) => m.id === modelData.id);
+        const isGlb = modelData.file ? modelData.isGlb : currentModel?.isGlb || false;
+
+        await updateModel(modelData.id, modelData.name, modelData.file || undefined, isGlb);
+
         // Если редактируемая модель была выбрана, обновляем значение `value`
         if (value === modelData.id.toString()) {
           onChange(modelData.name); // Обновляем значение `value` на новое имя модели
