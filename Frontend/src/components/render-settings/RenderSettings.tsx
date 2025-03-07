@@ -12,10 +12,13 @@ interface RenderSettingsProps {
 }
 
 export function RenderSettings({ productId }: RenderSettingsProps) {
-  const [horizontalAngle, setHorizontalAngle] = useState(0);
-  const [verticalAngle, setVerticalAngle] = useState(0);
-  const [lightEnergy, setLightEnergy] = useState(50);
-  const [lightAngle, setLightAngle] = useState(0);
+  const [settings, setSettings] = useState({
+    horizontalAngle: 0,
+    verticalAngle: 0,
+    lightEnergy: 50,
+    lightAngle: 0,
+  });
+
   const [renderedImage, setRenderedImage] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -30,7 +33,13 @@ export function RenderSettings({ productId }: RenderSettingsProps) {
     }
     setIsRendering(true);
     try {
-      const imageBlob = await api.renderModel(productId, horizontalAngle, verticalAngle, lightEnergy, lightAngle);
+      const imageBlob = await api.renderModel(
+        productId,
+        settings.horizontalAngle,
+        settings.verticalAngle,
+        settings.lightEnergy,
+        settings.lightAngle
+      );
       setRenderedImage(URL.createObjectURL(imageBlob));
     } catch {
       toast({ title: "Ошибка", description: "Не удалось отрендерить модель", variant: "destructive" });
@@ -55,18 +64,8 @@ export function RenderSettings({ productId }: RenderSettingsProps) {
         </Button>
       </div>
 
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <RenderControls
-          horizontalAngle={horizontalAngle}
-          verticalAngle={verticalAngle}
-          lightEnergy={lightEnergy}
-          lightAngle={lightAngle}
-          onHorizontalAngleChange={setHorizontalAngle}
-          onVerticalAngleChange={setVerticalAngle}
-          onLightEnergyChange={setLightEnergy}
-          onLightAhgleChange={setLightAngle}
-        />
+        <RenderControls onSettingsChange={setSettings} />
 
         <div className="flex items-center justify-center ">
           <RenderPreview
@@ -78,11 +77,7 @@ export function RenderSettings({ productId }: RenderSettingsProps) {
         </div>
       </div>
 
-      <FullScreenPreview
-        renderedImage={renderedImage}
-        isOpen={isFullScreen}
-        onClose={() => setIsFullScreen(false)}
-      />
+      <FullScreenPreview renderedImage={renderedImage} isOpen={isFullScreen} onClose={() => setIsFullScreen(false)} />
     </div>
   );
-} 
+}
