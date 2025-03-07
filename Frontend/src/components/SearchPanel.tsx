@@ -78,6 +78,8 @@ export function SearchPanel({
           Добавить товар
         </Button>
       </div>
+    
+      
   
       <div className="flex md:ml-auto items-start">
         <Input

@@ -18,10 +18,10 @@ interface ModelManageDialogProps {
   onOpenChange: (open: boolean) => void;
   model?: Model;
   onSave: (model: { id?: number; name: string; file?: File; isGlb: boolean }) => void;
-
+ 
 }
 
-export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelManageDialogProps) {
+export function ModelManageDialog({ open, onOpenChange, model, onSave,  }: ModelManageDialogProps) {
   const [modelName, setModelName] = useState(model?.modelType || "");
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [isGlb, setIsGlb] = useState(model?.isGlb || false); // Используем текущее значение isGlb

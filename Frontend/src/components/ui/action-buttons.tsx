@@ -28,12 +28,15 @@ interface ActionButtonsProps {
 export function ActionButtons({ onSave, onDelete, onClose, showDelete = true }: ActionButtonsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+
+
   return (
     <div className="flex items-center">
       <Button onClick={onSave} variant="default" size="sm">
         <Save className="h-4 w-4" />
         Сохранить
       </Button>
+      
 
       {showDelete && (
         <>

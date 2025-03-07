@@ -1,114 +1,77 @@
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import { useState } from "react";
+import { RenderControl } from "./renderConrol";
 
 interface RenderControlsProps {
-  horizontalAngle: number;
-  verticalAngle: number;
-  lightEnergy: number;
-  lightAngle: number;
-  onHorizontalAngleChange: (value: number) => void;
-  onVerticalAngleChange: (value: number) => void;
-  onLightEnergyChange: (value: number) => void;
-  onLightAhgleChange: (value: number) => void;
+  onSettingsChange: (settings: {
+    horizontalAngle: number;
+    verticalAngle: number;
+    lightEnergy: number;
+    lightAngle: number;
+  }) => void;
 }
 
-export function RenderControls({
-  horizontalAngle,
-  verticalAngle,
-  lightEnergy,
-  lightAngle,
-  onHorizontalAngleChange,
-  onVerticalAngleChange,
-  onLightEnergyChange,
-  onLightAhgleChange,
-}: RenderControlsProps) {
+export function RenderControls({ onSettingsChange }: RenderControlsProps) {
+  const [horizontalAngle, setHorizontalAngle] = useState(0);
+  const [verticalAngle, setVerticalAngle] = useState(0);
+  const [lightEnergy, setLightEnergy] = useState(50);
+  const [lightAngle, setLightAngle] = useState(0);
+
+  // Обновление настроек при каждом изменении
+  const handleChange = (key: string, value: number) => {
+    const newSettings = {
+      horizontalAngle,
+      verticalAngle,
+      lightEnergy,
+      lightAngle,
+      [key]: value, // обновляем только изменённое значение
+    };
+
+    if (key === "horizontalAngle") setHorizontalAngle(value);
+    if (key === "verticalAngle") setVerticalAngle(value);
+    if (key === "lightEnergy") setLightEnergy(value);
+    if (key === "lightAngle") setLightAngle(value);
+
+    onSettingsChange(newSettings);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
-        {/* <div className="flex items-center justify-between py-1 ">
-          <Label htmlFor="horizontalAngle">Горизонтальный угол</Label>
-        </div> */}
-        <div className="flex items-center justify-between">
-          <Label htmlFor="temperature">Горизонтальный угол</Label>
-          <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
-            {horizontalAngle}°
-          </span>
-        </div>
-        <Slider
-          id="horizontalAngle"
-          min={-90}
-          max={90}
-          step={1}
-          value={[horizontalAngle]}
-          onValueChange={(value) => onHorizontalAngleChange(value[0])}
-          className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-        />
-      </div>
-
-      <div className="grid gap-4">
-        {/* <div className="flex items-center justify-between py-1 ">
-          <Label htmlFor="verticalAngle">Вертикальный угол</Label>
-        </div> */}
-        <div className="flex items-center justify-between">
-          <Label htmlFor="temperature">Вертикальный угол</Label>
-          <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
-            {verticalAngle}°
-          </span>
-        </div>
-        <Slider
-          id="verticalAngle"
-          min={-90}
-          max={90}
-          step={1}
-          value={[verticalAngle]}
-          onValueChange={(value) => onVerticalAngleChange(value[0])}
-          className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-
-        />
-      </div>
-
-      <div className="grid gap-4">
-        {/* <div className="flex items-center justify-between py-1 ">
-          <Label htmlFor="lightEnergy">Яркость света</Label>
-        </div> */}
-        <div className="flex items-center justify-between">
-          <Label htmlFor="temperature">Яркость света</Label>
-          <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
-            {lightEnergy}%
-          </span>
-        </div>
-        <Slider
-          id="lightEnergy"
-          min={0}
-          max={100}
-          step={1}
-          value={[lightEnergy]}
-          onValueChange={(value) => onLightEnergyChange(value[0])}
-          className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-
-        />
-      </div>
-      <div className="grid gap-4">
-        {/* <div className="flex items-center justify-between py-1 ">
-          <Label htmlFor="lightAngle">Угол света</Label>
-        </div> */}
-        <div className="flex items-center justify-between">
-          <Label htmlFor="temperature">Угол света</Label>
-          <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
-            {lightAngle}°
-          </span>
-        </div>
-        <Slider
-          id="lightAngle"
-          min={-180}
-          max={180}
-          step={1}
-          value={[lightAngle]}
-          onValueChange={(value) => onLightAhgleChange(value[0])}
-          className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-
-        />
-      </div>
+      <RenderControl
+        id="horizontalAngle"
+        label="Горизонтальный угол"
+        value={horizontalAngle}
+        min={-90}
+        max={90}
+        unit="°"
+        onChange={(value) => handleChange("horizontalAngle", value)}
+      />
+      <RenderControl
+        id="verticalAngle"
+        label="Вертикальный угол"
+        value={verticalAngle}
+        min={-90}
+        max={90}
+        unit="°"
+        onChange={(value) => handleChange("verticalAngle", value)}
+      />
+      <RenderControl
+        id="lightEnergy"
+        label="Яркость света"
+        value={lightEnergy}
+        min={0}
+        max={100}
+        unit="%"
+        onChange={(value) => handleChange("lightEnergy", value)}
+      />
+      <RenderControl
+        id="lightAngle"
+        label="Угол света"
+        value={lightAngle}
+        min={-180}
+        max={180}
+        unit="°"
+        onChange={(value) => handleChange("lightAngle", value)}
+      />
     </div>
   );
-} 
+}
