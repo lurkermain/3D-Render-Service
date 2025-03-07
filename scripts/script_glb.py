@@ -16,7 +16,7 @@ addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
 bpy.context.scene.render.engine = 'CYCLES'
 
 # Включаем GPU рендеринг
-bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
+bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'OPTIX'
 bpy.context.preferences.addons['cycles'].preferences.get_devices()
 for device in bpy.context.preferences.addons['cycles'].preferences.devices:
     device.use = True
@@ -66,7 +66,7 @@ bpy.ops.transform.rotate(value=angle_vertical, orient_axis='Y')
 bpy.ops.transform.rotate(value=angle_horizontal, orient_axis='Z')
 
 # Настройки рендеринга
-bpy.context.scene.cycles.samples = 4
+bpy.context.scene.cycles.samples = 1
 bpy.context.scene.cycles.use_adaptive_sampling = False
 bpy.context.scene.cycles.use_denoising = False
 bpy.context.scene.cycles.use_fast_gi = False
@@ -75,7 +75,7 @@ bpy.context.scene.render.resolution_y = 1024
 bpy.context.scene.render.resolution_percentage = 100
 
 # Добавление камеры
-bpy.ops.object.camera_add(location=(3, 0, 1))
+bpy.ops.object.camera_add(location=(2, 0, 1))
 camera = bpy.context.object
 bpy.context.scene.camera = camera
 direction = model.location - camera.location

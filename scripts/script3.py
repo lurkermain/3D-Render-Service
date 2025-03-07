@@ -7,7 +7,7 @@ import os
 bpy.context.scene.render.engine = 'CYCLES'
 
 # Включаем GPU рендеринг
-bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'  # Или 'OPTIX' для новых карт
+bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'OPTIX'  # Или 'OPTIX' для новых карт
 
 # Включаем все доступные CUDA-устройства
 bpy.context.preferences.addons['cycles'].preferences.get_devices()
