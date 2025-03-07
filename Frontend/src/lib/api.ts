@@ -91,7 +91,7 @@ export const api = {
     formData.append("Blender_file", blenderFile);
     formData.append("isGlb", isGlb.toString());
 
-    await axios.post(`${API_URL}/model`, formData, {
+    await axios.post(`${API_URL}/model/?isGlb=${isGlb}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
