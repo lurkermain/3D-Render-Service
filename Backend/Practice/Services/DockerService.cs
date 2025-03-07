@@ -9,7 +9,7 @@ namespace Practice.Services
         private readonly DockerClient _client;
         private readonly ILogger<DockerService> _logger;
         private const string ContainerName = "practicdocker-main-blender-1";
-        private const string ContainerId = "27abde38a9b5235f5bc7dfc48b9c092370a5d3d36b5612338714c10d96ab9b7b";
+        private const string ContainerId = "d8f609d730f15c6955ef933adb43b153ae7e3d0161ca33f3ab55064bea406a98";
 
         public DockerService(ILogger<DockerService> logger)
         {
@@ -62,7 +62,7 @@ namespace Practice.Services
 
                 while (execInspect.Running)
                 {
-                    await Task.Delay(500);
+                    //await Task.Delay(100);
                     execInspect = await _client.Exec.InspectContainerExecAsync(execCreateResponse.ID);
                 }
                 sw.Stop();
