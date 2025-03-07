@@ -64,7 +64,7 @@ if not model:
 print(f"Using model: {model.name}")
 
 # Rendering settings
-bpy.context.scene.cycles.samples = 4
+bpy.context.scene.cycles.samples = 1
 bpy.context.scene.cycles.use_adaptive_sampling = False
 bpy.context.scene.cycles.use_denoising = False
 bpy.context.scene.cycles.use_fast_gi = False
