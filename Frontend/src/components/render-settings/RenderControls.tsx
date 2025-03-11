@@ -16,7 +16,7 @@ export function RenderControls({ onSettingsChange }: RenderControlsProps) {
   const [lightEnergy, setLightEnergy] = useState(50);
   const [lightAngle, setLightAngle] = useState(0);
 
-  // Обновление настроек при каждом изменении
+  // Обновление настроек только при отпускании слайдера
   const handleChange = (key: string, value: number) => {
     const newSettings = {
       horizontalAngle,
@@ -31,9 +31,10 @@ export function RenderControls({ onSettingsChange }: RenderControlsProps) {
     if (key === "lightEnergy") setLightEnergy(value);
     if (key === "lightAngle") setLightAngle(value);
 
-    onSettingsChange(newSettings);
+    onSettingsChange(newSettings); // Срабатывает только после отпускания слайдера
   };
 
+  console.log(horizontalAngle)
   return (
     <div className="space-y-4">
       <RenderControl

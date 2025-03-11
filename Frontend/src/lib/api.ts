@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { Product, ProductCreate,  BlenderModel} from '@/lib/types';
+import { Product, ProductCreate,  } from '@/lib/types';
+import { BlenderModel } from "@/lib/types"
 
 
 const API_URL = '/api/products';
-const IMAGE_API_URL = '/api/products';
+
 
 export const api = {
   // Получение всех продуктов
@@ -66,12 +67,12 @@ export const api = {
     lightEnergy: number,
     angle_light: number,
   ): Promise<Blob> => {
-    console.log(`${IMAGE_API_URL}/${id}/render`, {
-      params: { angle_horizontal, angle_vertical, lightEnergy, angle_light },
-      responseType: 'blob',
-    });
+    // console.log(`${IMAGE_API_URL}/${id}/render`, {
+    //   params: { angle_horizontal, angle_vertical, lightEnergy, angle_light },
+    //   responseType: 'blob',
+    // });
   
-    const response = await axios.put(`${IMAGE_API_URL}/${id}/render`, null, {
+    const response = await axios.put(`${API_URL}/${id}/render`, null, {
       params: { angle_horizontal, angle_vertical, lightEnergy, angle_light },
       responseType: 'blob',
     });

@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react"; // Добавлен useState
+import { useState } from "react";
 import { Check, ChevronsUpDown, MoreVertical, Pencil, Trash, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BlenderModel } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,18 +26,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge"
-
-
-
-export interface ComboboxOption {
-  value: string;
-  label: string;
-  isModel?: boolean;
-}
+import type { BlenderModel } from "@/lib/types";
 
 interface ModelSwitcherProps {
-  options: BlenderModel[];
+  models: BlenderModel[];
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
@@ -49,80 +40,87 @@ interface ModelSwitcherProps {
 }
 
 export function ModelSwitcher({
-  options,
+  models,
   value,
   onValueChange,
-  placeholder = "Select an option",
+  placeholder = "Выберите 3D модель",
   onAddModel,
   onEditModel,
   onDeleteModel,
   showModelActions = false,
 }: ModelSwitcherProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [modelToDelete, setModelToDelete] = useState<BlenderModel | null>(null); // Состояние для хранения модели, которую нужно удалить
+  const [modelToDelete, setModelToDelete] = useState<BlenderModel | null>(null);
 
   const handleDeleteClick = (model: BlenderModel) => {
-    setModelToDelete(model); // Сохраняем модель для удаления
-    setShowDeleteDialog(true); // Открываем диалог подтверждения удаления
+    setModelToDelete(model);
+    setShowDeleteDialog(true);
   };
 
   const handleConfirmDelete = () => {
     if (modelToDelete && onDeleteModel) {
-      onDeleteModel(modelToDelete.id); // Вызываем функцию удаления
+      onDeleteModel(modelToDelete.id);
     }
-    setShowDeleteDialog(false); // Закрываем диалог
-    setModelToDelete(null); // Сбрасываем модель для удаления
+    setShowDeleteDialog(false);
+    setModelToDelete(null);
   };
+
+  const selectedModel = models.find((model) => model.modelType === value);
 
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
-            {value ? options.find((option) => option.modelType === value)?.modelType : placeholder}
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between overflow-hidden">
+            <div className="flex items-center truncate max-w-[calc(100%-20px)] overflow-hidden">
+              {selectedModel ? (
+                <>
+                  <span className="truncate max-w-[150px] overflow-hidden text-ellipsis">{selectedModel.modelType}</span>
+                  {selectedModel.isGlb && (
+                    <Badge variant="outline" className="ml-2 text-xs truncate flex-shrink-0">
+                      glb
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground truncate">{placeholder}</span>
+              )}
+            </div>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent  className="w-full p-0">
           <Command>
             <CommandInput placeholder={placeholder} />
             <CommandList>
-              <CommandEmpty>No option found.</CommandEmpty>
-            </CommandList>
-            <CommandList>
+              <CommandEmpty>Модели не найдены</CommandEmpty>
               <CommandGroup>
-                {options.map((option) => (
+                {models.map((model) => (
                   <CommandItem
-                    key={option.id}
+                    key={model.id}
                     onSelect={() => {
-                      onValueChange(option.modelType);
+                      onValueChange(model.modelType);
                       setOpen(false);
                     }}
-                    className="flex justify-between"
+                    className="flex justify-between overflow-hidden"
                   >
-                    <div className="flex items-center">
-                      <Check className={cn("mr-2 h-4 w-4", value === option.modelType ? "opacity-100" : "opacity-0")} />
-                      {option.modelType}
+                    <div className="flex items-center max-w-[calc(100%-40px)] overflow-hidden">
+                      <Check className={cn("mr-2 h-4 w-4 flex-shrink-0", value === model.modelType ? "opacity-100" : "opacity-0")} />
+                      <div className="flex items-center overflow-hidden">
+                        <span className="truncate max-w-[150px] overflow-hidden text-ellipsis">{model.modelType}</span>
+                        {model.isGlb && (
+                          <Badge variant="outline" className="ml-2 text-xs truncate flex-shrink-0">glb</Badge>
+                        )}
+                      </div>
                     </div>
-                    {option.isGlb && (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "ml-2 text-xs",
-                          
-                          )}
-                        >
-                          glb
-                        </Badge>
-                      )}
                     {showModelActions && (onEditModel || onDeleteModel) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 p-0 hover:bg-transparent ml-2"
+                            className="h-6 w-6 p-0 hover:bg-transparent ml-2 flex-shrink-0"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -130,25 +128,20 @@ export function ModelSwitcher({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32">
                           {onEditModel && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditModel(option.id);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              onEditModel(model.id);
+                            }}>
+                              <Pencil className="mr-2 h-4 w-4" />
                               Изменить
                             </DropdownMenuItem>
                           )}
                           {onDeleteModel && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(option); // Используем новую функцию для удаления
-                              }}
-                              className="text-red-600"
-                            >
-                              <Trash className="h-4 w-4" />
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(model);
+                            }} className="text-red-600">
+                              <Trash className="mr-2 h-4 w-4" />
                               Удалить
                             </DropdownMenuItem>
                           )}
@@ -165,7 +158,7 @@ export function ModelSwitcher({
                 <CommandList>
                   <CommandGroup>
                     <CommandItem onSelect={onAddModel}>
-                      <Plus className="h-4 w-4" />
+                      <Plus className="mr-2 h-4 w-4" />
                       Добавить модель
                     </CommandItem>
                   </CommandGroup>
@@ -175,23 +168,15 @@ export function ModelSwitcher({
           </Command>
         </PopoverContent>
       </Popover>
-
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="w-[calc(100%-2rem)] sm:max-w-[425px]">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Удаление модели</AlertDialogTitle>
-            <AlertDialogDescription>
-              Вы уверены, что хотите удалить эту модель? Это действие нельзя отменить.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Вы уверены, что хотите удалить эту модель? Это действие нельзя отменить.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <AlertDialogCancel className="sm:mt-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete} // Используем новую функцию для подтверждения удаления
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

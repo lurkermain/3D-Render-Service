@@ -7,7 +7,6 @@ interface ProductCardProps {
   product: Product
   onClick: () => void
 }
-
 const ProductCard = memo(({ product, onClick }: ProductCardProps) => {
   return (
     <div

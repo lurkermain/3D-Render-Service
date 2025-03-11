@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { Play } from "lucide-react";
 import { RenderControls } from "./RenderControls";
 import { RenderPreview } from "./RenderPreview";
 import { FullScreenPreview } from "./FullScreenPreview";
@@ -53,15 +51,15 @@ export function RenderSettings({ productId }: RenderSettingsProps) {
     if (productId) {
       renderModel();
     }
-  }, [productId]);
+  }, [productId, settings]);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold ">Рендеринг товара</h2>
-        <Button onClick={renderModel} disabled={isRendering} className="flex items-center gap-2">
+        {/* <Button onClick={renderModel} disabled={isRendering} className="flex items-center gap-2">
           <Play className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
