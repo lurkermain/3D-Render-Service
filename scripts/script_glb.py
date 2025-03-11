@@ -8,10 +8,6 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
 bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
 
-# Проверяем, доступен ли аддон
-import addon_utils
-addon_utils.enable("io_scene_gltf", default_set=True, persistent=True)
-
 # Устанавливаем движок рендеринга
 bpy.context.scene.render.engine = 'CYCLES'
 
@@ -94,7 +90,7 @@ light.data.use_shadow = True
 
 # Сохранение рендера
 bpy.context.scene.render.filepath = output_path
-bpy.context.scene.render.image_settings.file_format = 'PNG'
+bpy.context.scene.render.image_settings.file_format = 'WEBP'
 bpy.ops.render.render(write_still=True)
 
 print(f"Rendered image saved to {output_path}")

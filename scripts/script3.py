@@ -130,7 +130,7 @@ print(f"Rendering to: {output_path}")
 
 # Render output
 bpy.context.scene.render.filepath = output_path
-bpy.context.scene.render.image_settings.file_format = 'PNG'
+bpy.context.scene.render.image_settings.file_format = 'WEBP'
 bpy.ops.render.render(write_still=True)
 
 print(f"Rendered image saved to {output_path}")

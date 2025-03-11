@@ -59,7 +59,7 @@ namespace Practice.Controllers
                 string hostModelPath;
                 if (blend_file.IsGlb)
                 {
-                    hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.glb", blend_file.Blender_file);
+                    hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.fbx", blend_file.Blender_file);
                     _logger.LogInformation($"GLB файл сохранен по пути: {hostModelPath}");
                 }
                 else
@@ -81,17 +81,29 @@ namespace Practice.Controllers
                     _logger.LogInformation($"Текстура сохранена по пути: {hostSkinPath}");
                 }
 
-                string hostOutputPath = _fileManager.GetFilePath("output", $"rendered_image_{id}.png");
+                string hostOutputPath = _fileManager.GetFilePath("output", $"rendered_image_{id}.webp");
                 _logger.LogInformation($"Выходной файл будет сохранен по пути: {hostOutputPath}");
+
+                // Удаляем старый рендер, если он есть
+                if (System.IO.File.Exists(hostOutputPath))
+                {
+                    _logger.LogInformation($"Удаление старого рендера: {hostOutputPath}");
+                    System.IO.File.Delete(hostOutputPath);
+                }
 
                 bool renderSuccess = await _dockerService.RenderModelInContainer(id, angle_horizontal, angle_vertical, angle_light, lightEnergy, blend_file.IsGlb);
 
-                if (!renderSuccess || !System.IO.File.Exists(hostOutputPath))
+                if (!renderSuccess)
                 {
-                    _logger.LogError($"Ошибка рендера для продукта с ID {id}. Файл не найден или рендер не удался.");
-                    return StatusCode(500, new { error = "Ошибка рендера или файл не найден." });
+                    _logger.LogError($"Ошибка рендера для продукта с ID {id}.");
+                    return StatusCode(500, new { error = "Ошибка рендера." });
                 }
 
+                while (!System.IO.File.Exists(hostOutputPath))
+                {
+
+                }
+                await Task.Delay(100);
                 var renderedBytes = await System.IO.File.ReadAllBytesAsync(hostOutputPath);
                 _logger.LogInformation($"Рендер успешно завершен для продукта с ID {id}.");
 
@@ -103,6 +115,7 @@ namespace Practice.Controllers
                 return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
             }
         }
+
 
 
 
