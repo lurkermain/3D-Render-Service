@@ -1,15 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo,  useCallback } from 'react';
 import { Product, ProductCreate } from '../lib/types';
 import { api } from '../lib/api';
 import { useToast } from './use-toast';
+import { useRefresh } from '@/hooks/useRefresh';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Фильтрация продуктов на основе поискового запроса
+  const { refresh } = useRefresh();
+
   const filteredProducts = useMemo(() => {
-    return products.filter(product => 
+    return products.filter(product =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -17,10 +18,13 @@ export function useProducts() {
 
   const { toast } = useToast();
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
+      console.log('Fetching products...');
       const data = await api.getAllProducts();
-      setProducts(data);
+      console.log('Fetched data:', data);
+      setProducts([...data]);
+      refresh();
     } catch (error) {
       console.error('Failed to fetch products:', error);
       toast({
@@ -29,7 +33,7 @@ export function useProducts() {
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
   const createProduct = async (product: ProductCreate) => {
     try {
@@ -52,9 +56,8 @@ export function useProducts() {
 
   const updateProduct = async (updatedProduct: Product) => {
     try {
-      await api.updateProduct(updatedProduct.id, updatedProduct);
-      setProducts(prev => 
-        prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+      setProducts(prev =>
+        prev.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
       );
       return true;
     } catch (error) {
@@ -88,7 +91,7 @@ export function useProducts() {
 
   return {
     products: filteredProducts,
-    totalProducts: products.length,
+    totalProducts: filteredProducts.length,
     searchQuery,
     setSearchQuery,
     fetchProducts,
@@ -96,4 +99,4 @@ export function useProducts() {
     updateProduct,
     deleteProduct,
   };
-} 
+}

@@ -4,24 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Search, PlusCircle,  X } from "lucide-react";
 
 
-interface SearchPanelProps {
+interface ToolbarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   totalProducts: number;
   onCreateClick: () => void;
 }
 
-export function SearchPanel({
+export function Toolbar({
   searchQuery,
   onSearchChange,
   totalProducts,
   onCreateClick,
-}: SearchPanelProps) {
+}: ToolbarProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
   const handleExpandSearch = () => {
     setIsSearchExpanded(true);
   };
+
+console.log("toolbar render")
+
 
   const handleCloseSearch = () => {
     setIsSearchExpanded(false);
@@ -79,7 +82,7 @@ export function SearchPanel({
         </Button>
       </div>
     
-      
+           
   
       <div className="flex md:ml-auto items-start">
         <Input

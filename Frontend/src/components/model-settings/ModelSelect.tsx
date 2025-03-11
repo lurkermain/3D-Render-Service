@@ -3,7 +3,8 @@ import { useState } from "react";
 import { ModelManageDialog } from "./ModelManageDialog";
 import { ModelSwitcher } from '@/components/model-settings/ModelSwitcher';
 import { useModels } from "@/hooks/useModels";
-
+import { useRefresh } from "@/hooks/useRefresh";
+import { useProductsContext } from '@/context/ProductsContext';
 
 interface Model {
   id: number;
@@ -23,8 +24,8 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const { models, addModel, updateModel, deleteModel } = useModels();
 
-
-
+  const { refresh } = useRefresh();
+  const {fetchProducts} =  useProductsContext();
 
   const handleAddModel = () => {
     setEditingModel(null);
@@ -47,7 +48,9 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
         const isGlb = modelData.file ? modelData.isGlb : currentModel?.isGlb || false;
 
         await updateModel(modelData.id, modelData.name, modelData.file || undefined, isGlb);
-
+        await fetchProducts();
+        refresh();
+        console.log("refresh start")
         // Если редактируемая модель была выбрана, обновляем значение `value`
         if (value === modelData.id.toString()) {
           onChange(modelData.name); // Обновляем значение `value` на новое имя модели
@@ -69,7 +72,7 @@ export function ModelSelect({ value, onChange, placeholder = "Выберите 3
   return (
     <>
       <ModelSwitcher
-        options={models}
+        models={models}
         value={value}
         onValueChange={onChange}
         placeholder={placeholder}

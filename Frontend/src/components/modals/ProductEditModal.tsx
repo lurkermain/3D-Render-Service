@@ -20,7 +20,6 @@ export function ProductEditModal({
 }: ProductEditModalProps) {
 
 
-  console.log(product.id)
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
