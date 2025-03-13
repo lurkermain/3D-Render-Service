@@ -108,7 +108,7 @@ export function CreateProductForm({ onSubmit, onCancel }: CreateProductFormProps
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 pl-2">
+    <form noValidate onSubmit={handleSubmit} className="space-y-8 pl-2">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Новый товар</h2>
         <ActionButtons

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from '@/hooks/use-toast';
 
 interface Model {
   id: number;
@@ -26,6 +27,8 @@ export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelMa
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [isGlb, setIsGlb] = useState(model?.isGlb || false); // Используем текущее значение isGlb
 
+  const { toast } = useToast();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -41,11 +44,30 @@ export function ModelManageDialog({ open, onOpenChange, model, onSave }: ModelMa
     setIsGlb(model?.isGlb || false); // Обновляем isGlb при изменении модели
   }, [model]);
 
-  const handleSave = () => {
-    if (!modelName || (!modelFile && !model)) {
-      alert("Введите название модели и выберите файл!");
-      return;
+
+  const validateForm = () => {
+   
+    if (!modelName) { // Проверка на выбор упаковки
+      toast({ title: 'Ошибка', description: 'Название модели обязательно', variant: 'destructive' });
+      return false;
     }
+    if (!modelFile) {
+      toast({
+        title: 'Ошибка',
+        description: 'Файл модели обязателен',
+        variant: 'destructive'
+      });
+      return false;
+    }
+    return true;
+  };
+
+
+  const handleSave = () => {
+ 
+
+    if (!validateForm()) return;
+
     onSave({
       id: model?.id,
       name: modelName,
