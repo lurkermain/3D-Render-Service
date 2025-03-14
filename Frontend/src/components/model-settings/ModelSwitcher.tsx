@@ -90,12 +90,12 @@ export function ModelSwitcher({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent side="bottom" className="w-full p-0 max-h-[50vh] overflow-y-auto sm:max-h-80">
+        <PopoverContent side="bottom" className="w-full p-0 max-h-[50vh] ">
         <Command>
             <CommandInput placeholder={placeholder} />
             <CommandList>
               <CommandEmpty>Модели не найдены</CommandEmpty>
-              <CommandGroup>
+              <CommandGroup className="overflow-y-auto max-h-60 sm:max-h-64">
                 {models.map((model) => (
                   <CommandItem
                     key={model.id}
