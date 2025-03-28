@@ -32,6 +32,56 @@ namespace Practice.Controllers
         private readonly FileManager _fileManager = fileManager;
         private readonly DockerService _dockerService = dockerService;
 
+
+
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadModel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { error = "Файл не загружен." });
+            }
+
+            string uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "models");
+            if (!Directory.Exists(uploadDir))
+            {
+                Directory.CreateDirectory(uploadDir);
+            }
+
+            string filePath = Path.Combine(uploadDir, file.FileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return Ok(new { message = "Файл загружен.", fileName = file.FileName });
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         [HttpPut("{id}/render")]
         public async Task<IActionResult> RenderModel(
     int id,
