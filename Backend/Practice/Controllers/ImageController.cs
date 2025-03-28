@@ -14,6 +14,8 @@ using Docker.DotNet.Models;
 using Docker.DotNet;
 using Practice.Services;
 using Microsoft.Extensions.Logging;
+using System.IO;
+using System.Threading;
 
 namespace Practice.Controllers
 {
@@ -99,10 +101,12 @@ namespace Practice.Controllers
                     return StatusCode(500, new { error = "Ошибка рендера." });
                 }
 
-                while (!System.IO.File.Exists(hostOutputPath))
+                if (!await WaitForFileAsync(hostOutputPath))
                 {
-
+                    _logger.LogError($"Файл рендера {hostOutputPath} не появился за отведенное время.");
+                    return StatusCode(500, new { error = "Рендеринг занял слишком много времени." });
                 }
+
                 await Task.Delay(100);
                 var renderedBytes = await System.IO.File.ReadAllBytesAsync(hostOutputPath);
                 _logger.LogInformation($"Рендер успешно завершен для продукта с ID {id}.");
@@ -116,7 +120,17 @@ namespace Practice.Controllers
             }
         }
 
-
+        async Task<bool> WaitForFileAsync(string path, int timeoutMs = 10000)
+        {
+            var sw = Stopwatch.StartNew();
+            while (!System.IO.File.Exists(path))
+            {
+                if (sw.ElapsedMilliseconds > timeoutMs)
+                    return false;
+                await Task.Delay(100);
+            }
+            return true;
+        }
 
 
         [HttpGet("models")]
