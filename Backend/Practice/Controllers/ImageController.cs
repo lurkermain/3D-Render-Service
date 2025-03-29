@@ -55,7 +55,7 @@ namespace Practice.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            return Ok(new { message = "Файл загружен.", fileName = file.FileName });
+            return Ok(new {message = "Файл загружен."});
         }
 
 
@@ -64,6 +64,34 @@ namespace Practice.Controllers
 
 
 
+        [HttpGet("{id}/model")]
+        public async Task<IActionResult> GetModel(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                _logger.LogWarning($"Продукт с ID {id} не найден.");
+                return NotFound(new { error = "Продукт не найден." });
+            }
+
+            var model = await _context.Blender.FirstOrDefaultAsync(m => m.ModelType == product.ModelType);
+            if (model == null)
+            {
+                _logger.LogWarning($"3D-модель для типа {product.ModelType} не найдена.");
+                return NotFound(new { error = "3D-модель не найдена." });
+            }
+
+            string modelFilePath = _fileManager.GetFilePath("models", $"model_{id}.glb");
+
+            if (!System.IO.File.Exists(modelFilePath))
+            {
+                _logger.LogWarning($"Файл модели {modelFilePath} не найден.");
+                return NotFound(new { error = "Файл модели не найден." });
+            }
+
+            byte[] modelBytes = await System.IO.File.ReadAllBytesAsync(modelFilePath);
+            return File(modelBytes, "model/gltf-binary", $"model_{id}.glb");
+        }
 
 
 
