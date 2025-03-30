@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Product } from '@/lib/types';
 import { ProductEditModal } from '@/components/modals/ProductEditModal';
 import { ProductCreateModal } from '@/components/modals/ProductCreateModal';
@@ -13,15 +13,15 @@ export function Home() {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
 
-  const { products, totalProducts, searchQuery, setSearchQuery, fetchProducts, createProduct, updateProduct, deleteProduct } =
+  const { products, totalProducts, searchQuery, setSearchQuery,  createProduct, updateProduct, deleteProduct } =
   useProductsContext();
 
     
     console.log('HOME RENDER', products);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // useEffect(() => {
+  //   fetchProducts();
+  // }, []);
 
   
   // Мемоизируем products
