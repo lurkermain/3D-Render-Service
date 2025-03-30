@@ -35,30 +35,6 @@ namespace Practice.Controllers
 
 
 
-        [HttpPost("upload")]
-        public async Task<IActionResult> UploadModel(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest(new { error = "Файл не загружен." });
-            }
-
-            string uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "models");
-            if (!Directory.Exists(uploadDir))
-            {
-                Directory.CreateDirectory(uploadDir);
-            }
-
-            string filePath = Path.Combine(uploadDir, file.FileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return Ok(new {message = "Файл загружен."});
-        }
-
-
 
 
 
@@ -74,14 +50,17 @@ namespace Practice.Controllers
                 return NotFound(new { error = "Продукт не найден." });
             }
 
-            var model = await _context.Blender.FirstOrDefaultAsync(m => m.ModelType == product.ModelType);
+            var model = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType != null && p.ModelType == product.ModelType.ToString());
             if (model == null)
             {
                 _logger.LogWarning($"3D-модель для типа {product.ModelType} не найдена.");
                 return NotFound(new { error = "3D-модель не найдена." });
             }
 
-            string modelFilePath = _fileManager.GetFilePath("models", $"model_{id}.glb");
+            string hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.glb", model.Blender_file);
+            _logger.LogInformation($"GLB файл сохранен по пути: {hostModelPath}");
+
+            string modelFilePath = _fileManager.GetFilePath("blender_files", $"model_{id}.glb");
 
             if (!System.IO.File.Exists(modelFilePath))
             {
