@@ -32,14 +32,6 @@ namespace Practice.Controllers
         private readonly FileManager _fileManager = fileManager;
         private readonly DockerService _dockerService = dockerService;
 
-
-
-
-
-
-
-
-
         [HttpGet("{id}/model")]
         public async Task<IActionResult> GetModel(int id)
         {
@@ -57,10 +49,32 @@ namespace Practice.Controllers
                 return NotFound(new { error = "3D-модель не найдена." });
             }
 
-            string hostModelPath = _fileManager.SaveFile("blender_files", $"model_{id}.glb", model.Blender_file);
-            _logger.LogInformation($"GLB файл сохранен по пути: {hostModelPath}");
+            string modelFilePath;
 
-            string modelFilePath = _fileManager.GetFilePath("blender_files", $"model_{id}.glb");
+            if (model.IsGlb)
+            {
+                // Если это .glb, просто отдаем файл
+                modelFilePath = _fileManager.SaveFile("/app/blender_files/", $"model_{id}.glb", model.Blender_file);
+            }
+            else
+            {
+                // Если это .blend, отправляем запрос в Python-сервис для обработки
+                if (product.Image == null || product.Image.Length == 0)
+                {
+                    _logger.LogWarning($"Текстура не загружена для продукта с ID {id}.");
+                    return BadRequest(new { error = "Текстура не загружена для данной модели." });
+                }
+
+                string blendPath = _fileManager.SaveFile("/app/blender_files/", $"model_{id}.blend", model.Blender_file);
+                string skinPath = _fileManager.SaveFile("/app/skins/", $"skin_{id}.png", product.Image);
+                modelFilePath = _fileManager.GetFilePath("/app/blender_files/", $"model_{id}.glb");
+
+                var success = await _dockerService.ApplySkinAndConvertToGlb(id, blendPath, skinPath, modelFilePath);
+                if (!success)
+                {
+                    return StatusCode(500, new { error = "Ошибка обработки Blender-модели." });
+                }
+            }
 
             if (!System.IO.File.Exists(modelFilePath))
             {
@@ -74,22 +88,14 @@ namespace Practice.Controllers
 
 
 
+   
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-        [HttpPut("{id}/render")]
+        /*[HttpPut("{id}/render")]
         public async Task<IActionResult> RenderModel(
     int id,
     [FromQuery] int angle_horizontal = 0,
@@ -175,7 +181,7 @@ namespace Practice.Controllers
                 _logger.LogError(ex, $"Ошибка при рендере продукта с ID {id}: {ex.Message}");
                 return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
             }
-        }
+        }*/
 
         async Task<bool> WaitForFileAsync(string path, int timeoutMs = 10000)
         {
