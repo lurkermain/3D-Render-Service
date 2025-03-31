@@ -83,7 +83,7 @@ namespace Practice.Controllers
             }
 
             byte[] modelBytes = await System.IO.File.ReadAllBytesAsync(modelFilePath);
-            return File(modelBytes, "model/gltf-binary", $"model_{id}.glb");
+            return File(modelBytes, "image/png");
         }
 
 
