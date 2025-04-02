@@ -113,5 +113,8 @@ export const api = {
   deleteModel: async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/${id}/model`);
   },
-  
+  getModel: (id: number): string => {
+    console.log("model fetch")
+  return `${API_URL}/${id}/model`;
+},
 };

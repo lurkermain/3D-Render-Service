@@ -3,10 +3,11 @@ import { Product } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { ProductBasicInfo } from '@/components/product/ProductBasicInfo';
-import { RenderSettings } from '@/components/render-settings/RenderSettings';
+// import { RenderSettings } from '@/components/render-settings/RenderSettings';
 import { ProductImage } from '@/components/product/ProductImage';
 import { ActionButtons } from '@/components/ui/action-buttons';
 import { Separator } from "@/components/ui/separator";
+import ModelViewer from "@/components/render-settings/ModelViewer";
 
 interface ProductFormProps {
   product: Product | null;
@@ -23,6 +24,8 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
   });
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(product ? api.getImageUrl(product.id) : '');
+  // const [modelUrl, setModelUrl] = useState(product ? api.getModel(product.id): '');
+  const modelUrl = product ? api.getModel(product.id) : null;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +38,7 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
       setImagePreview(api.getImageUrl(product.id));
     }
   }, [product]);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +93,12 @@ export function ProductForm({ product, onSubmit, onDelete, onClose }: ProductFor
         <ProductImage {...{ imagePreview, handleImageUpload }} />
       </div>
       <Separator className="my-6" />
-      {product && <RenderSettings productId={product.id} />}
+      {/* {product && <RenderSettings productId={product.id} />} */}
+      {modelUrl && <ModelViewer modelUrl={modelUrl} />}
+     
+
+      
+
     </form>
   );
 }
