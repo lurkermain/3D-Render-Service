@@ -90,7 +90,7 @@ export default function ModelViewer({ productId }: { productId: number }) {
                             shadow-intensity="1"
                             environment-image="neutral"
                             exposure={1} // Теперь TypeScript принимает этот атрибут
-                            min-camera-orbit="auto auto 13m"
+                            min-camera-orbit="auto auto 5m"
                             max-camera-orbit="auto auto 10m"
                             camera-orbit="0deg 75deg 1m"
                             field-of-view="30deg"
