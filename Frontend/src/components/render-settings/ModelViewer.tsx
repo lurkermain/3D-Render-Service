@@ -59,7 +59,7 @@ export default function ModelViewerWrapper({ modelUrl }: { modelUrl: string }) {
       </div>
       <Suspense fallback={<div>Загрузка модели...</div>}>
         <Canvas 
-          camera={{ position: [0, 0, 5], fov: 50 }} 
+          camera={{ position: [0, 0, 5], fov: 20 }} 
           className="w-full h-[600px] bg-gray-100 rounded-lg shadow-md"
           shadows // Включаем поддержку теней
         >
