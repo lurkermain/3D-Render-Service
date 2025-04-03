@@ -1,71 +1,115 @@
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
-import { Suspense, useRef, useEffect } from "react";
-import * as THREE from "three";
+"use client"
 
-function ModelViewer({ modelUrl }: { modelUrl: string }) {
-  const { scene } = useGLTF(modelUrl);
-  const modelRef = useRef<THREE.Group>(null);
+import { useEffect, useState, useRef } from "react"
+import { Slider } from "@/components/ui/slider"
+import { Sun } from "lucide-react"
+import { api } from "@/lib/api"
 
-  useEffect(() => {
-    if (modelRef.current) {
-      const box = new THREE.Box3().setFromObject(modelRef.current);
-      const center = new THREE.Vector3();
-      box.getCenter(center);
-      modelRef.current.position.sub(center);
+// Описываем глобально тип для model-viewer
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "model-viewer": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string
+        alt?: string
+        "camera-controls"?: boolean
+        "shadow-intensity"?: string
+        "environment-image"?: string
+        exposure?: number
+        "min-camera-orbit"?: string
+        "max-camera-orbit"?: string
+        "camera-orbit"?: string
+        "field-of-view"?: string
+      }
     }
-  }, [scene]);
-
-  return (
-    <>
-      {/* Основное окружающее освещение */}
-      <ambientLight intensity={0.5} />
-      
-      {/* Ключевой направленный свет */}
-      <directionalLight
-        position={[5, 5, 5]}
-        intensity={1}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
-      
-      {/* Заполняющий свет с другой стороны */}
-      <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.5}
-      />
-      
-      {/* Подсветка сверху */}
-      <directionalLight
-        position={[0, 10, 0]}
-        intensity={0.3}
-      />
-      
-      {/* Окружающая среда (опционально) */}
-      <Environment preset="city" />
-      
-      <OrbitControls />
-      <primitive ref={modelRef} object={scene} />
-    </>
-  );
+  }
 }
 
-export default function ModelViewerWrapper({ modelUrl }: { modelUrl: string }) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold">Рендеринг товара</h2>
-      </div>
-      <Suspense fallback={<div>Загрузка модели...</div>}>
-        <Canvas 
-          camera={{ position: [0, 0, 5], fov: 50 }} 
-          className="w-full h-[600px] bg-gray-100 rounded-lg shadow-md"
-          shadows // Включаем поддержку теней
-        >
-          <ModelViewer modelUrl={modelUrl} />
-        </Canvas>
-      </Suspense>
-    </div>
-  );
+// Описываем тип для model-viewer
+interface HTMLModelViewerElement extends HTMLElement {
+  exposure?: number
+}
+
+export default function ModelViewer({ productId }: { productId: number }) {
+    const [modelUrl, setModelUrl] = useState<string | null>(null)
+    const [isModelViewerDefined, setIsModelViewerDefined] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    
+    // Указываем, что ref относится к model-viewer
+    const modelViewerRef = useRef<HTMLModelViewerElement | null>(null)
+
+    useEffect(() => {
+        import("@google/model-viewer").then(() => setIsModelViewerDefined(true))
+    }, [])
+
+    useEffect(() => {
+        if (productId) {
+            const fetchModel = async () => {
+                setIsLoading(true);
+                setError(null);
+              
+                try {
+                  const url = await api.getModel(productId);
+                  setModelUrl(url);
+                } catch (err) {
+                  setError("Не удалось загрузить модель");
+                } finally {
+                  setIsLoading(false);
+                }
+              };
+            fetchModel()
+        }
+    }, [productId])
+
+    const handleLightIntensityChange = (value: number[]) => {
+        if (modelViewerRef.current) {
+            modelViewerRef.current.exposure = value[0] // Теперь TypeScript не ругается
+        }
+    }
+
+    return (
+        <div className="container mx-auto">
+        <h2 className="text-lg font-bold ">Рендеринг товара</h2>
+
+            <div className="lg:col-span-2 bg-white rounded-lg overflow-hidden h-[500px] flex items-center justify-center">
+                {isLoading ? (
+                    <div className="w-16 h-16 relative">
+                        <div className="absolute inset-0 rounded-full animate-spin border-4 border-t-black border-solid"></div>
+                    </div>
+                ) : error ? (
+                    <p className="text-red-500 text-center">{error}</p>
+                ) : (
+                    isModelViewerDefined && modelUrl && (
+                        // @ts-ignore 
+                        <model-viewer
+                            ref={modelViewerRef}
+                            src={modelUrl}
+                            alt="3D model"
+                            camera-controls
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            exposure={1} // Теперь TypeScript принимает этот атрибут
+                            min-camera-orbit="auto auto 13m"
+                            max-camera-orbit="auto auto 10m"
+                            camera-orbit="0deg 75deg 1m"
+                            field-of-view="30deg"
+                            style={{ width: "100%", height: "100%" }}
+                            // @ts-ignore 
+                        ></model-viewer>
+                    )
+                )}
+            </div>
+
+            {!isLoading && !error && (
+                <div className="mt-4 px-4">
+                    <div className="flex items-center mb-2">
+                        <Sun className="mr-2 h-4 w-4" />
+                        <span className="text-sm font-medium">Light Intensity</span>
+                    </div>
+                    <Slider defaultValue={[1]} min={0} max={2} step={0.01} onValueChange={handleLightIntensityChange} />
+                </div>
+            )}
+        </div>
+    )
 }

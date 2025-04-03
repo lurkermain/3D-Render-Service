@@ -113,8 +113,20 @@ export const api = {
   deleteModel: async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/${id}/model`);
   },
-  getModel: (id: number): string => {
-    console.log("model fetch")
-  return `${API_URL}/${id}/model`;
-},
+  getModel: async (id: number): Promise<string> => {
+    const url = `${API_URL}/${id}/model`;
+  
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки модели (${response.status}): ${response.statusText}`);
+      }
+  
+      return url; // Вернем URL, как было изначально
+    } catch (error) {
+      console.error("Ошибка при загрузке модели:", error);
+      throw error; // Прокидываем ошибку дальше
+    }
+  },
 };
