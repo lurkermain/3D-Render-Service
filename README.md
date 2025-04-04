@@ -1,4 +1,5 @@
 # 3D-Render-Service
+![image](https://github.com/user-attachments/assets/3ea37682-df86-49c3-b0b1-2cac871c51dc)
 
 3D-Render-Service — это проект, предназначенный для предоставления услуг по рендерингу 3D-моделей с использованием современных технологий и инструментов.
 
