@@ -23,3 +23,18 @@
 3. Введите следующую команду для сборки и запуска контейнеров Docker: docker-compose up --build
 
 Для работы со сваггером надо зайти по порту localhost:5000/swagger
+
+Для работы без докера
+Скачайте и установите Blender с официального сайта: [Blender Download](https://www.blender.org/download/).
+Убедитесь, что Blender добавлен в окружение, чтобы вы могли запускать скрипты для Blender. Измените класс ImageController чтобы запускать консоль локально а не передавать параметры в докер
+
+Пример кода
+var start = new ProcessStartInfo
+                {
+                    FileName = blenderPath,
+                    Arguments = $"-b \"{tempBlenderFilePath}\" -P \"{scriptPath}\" -- \"{tempSkinPath}\" \"{outputPath}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
