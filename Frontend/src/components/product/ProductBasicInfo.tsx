@@ -1,34 +1,57 @@
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Combobox } from '../ui/combobox';
-import { packageTypes } from '../../lib/types';
-import { Label } from '../ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ModelSelect } from '@/components/model-settings/ModelSelect'
 
 interface ProductBasicInfoProps {
-  name: string;
-  description: string;
-  modelType: string;
-  setName: (value: string) => void;
-  setDescription: (value: string) => void;
-  setModelType: (value: string) => void;
+  productInfo: {
+    name: string;
+    description: string;
+    modelType: string;
+  };
+  setProductInfo: (info: { name: string; description: string; modelType: string }) => void;
 }
 
-export function ProductBasicInfo({ name, description, modelType, setName, setDescription, setModelType }: ProductBasicInfoProps) {
+export function ProductBasicInfo({ productInfo, setProductInfo }: ProductBasicInfoProps) {
+  const { name, description, modelType } = productInfo;
+  
   return (
     <div className="space-y-4">
       <div className="grid gap-2">
         <Label htmlFor="name">Название продукта</Label>
-        <Input id="name"  value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setProductInfo({ ...productInfo, name: e.target.value })}
+          required
+        />
       </div>
+
+
 
       <div className="grid gap-2">
         <Label htmlFor="description">Описание продукта</Label>
-        <Textarea id="description"  value={description} onChange={(e) => setDescription(e.target.value)} required className="min-h-[100px]" />
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setProductInfo({ ...productInfo, description: e.target.value })}
+          required
+          className="min-h-[100px]"
+        />
       </div>
 
-      <div className="grid gap-2">
+
+
+      <div className="grid gap-2 w-full">
         <Label htmlFor="model-type">Тип упаковки</Label>
-        <Combobox options={packageTypes} value={modelType} onValueChange={setModelType} placeholder="Тип упаковки" />
+        
+          <ModelSelect
+            value={modelType || ""}
+            onChange={(value) => setProductInfo({ ...productInfo, modelType: value })}
+            placeholder="Тип упаковки"
+           
+          />
+        
       </div>
     </div>
   );

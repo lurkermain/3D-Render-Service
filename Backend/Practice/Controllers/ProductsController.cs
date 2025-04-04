@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Practice.Configuration;
-using Practice.Enums;
 using Practice.Helpers;
 using Practice.Models;
 
@@ -10,9 +9,10 @@ namespace Practice.Controllers
 {
     [ApiController]
     [Route("api/products")]
-    public class ProductsController(ApplicationDbContext context) : ControllerBase
+    public class ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger) : ControllerBase
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ProductsController> _logger = logger;
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -23,8 +23,8 @@ namespace Practice.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
-                    ModelType = p.ModelType,
-                    ImageUrl = Url.Action("GetImage", new { id = p.Id }) // Генерация ссылки на метод GetImage
+                    ModelType = p.ModelType, // Используем имя типа модели
+                    ImageUrl = Url.Action("GetImage", new { id = p.Id })
                 })
                 .ToListAsync();
 
@@ -34,23 +34,24 @@ namespace Practice.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (product == null)
             {
                 return NotFound();
             }
 
-            // Преобразуем данные в DTO
             var productDto = new ProductUrl
             {
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
-                ModelType = product.ModelType,
-                ImageUrl = Url.Action("GetImage", new { id = product.Id }) // Генерация ссылки на метод GetImage
+                ModelType = product.ModelType, // Используем имя типа модели
+                ImageUrl = Url.Action("GetImage", new { id = product.Id })
             };
 
-            return Ok(productDto); // Возвращаем JSON-объект
+            return Ok(productDto);
         }
 
         [HttpGet("{id}/image")]
@@ -67,36 +68,46 @@ namespace Practice.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] ModelType modeltype, IFormFile? image)
+        public async Task<IActionResult> Create([FromForm] string name, [FromForm] string description, [FromForm] string modeltype, IFormFile? image)
         {
-            if (image == null || image.Length == 0)
+            try
             {
-                return BadRequest("Image file is required.");
+                if (image == null || image.Length == 0)
+                {
+                    return BadRequest("Image file is required.");
+                }
+
+                var modelType = await _context.Blender.FirstOrDefaultAsync(mt => mt.ModelType == modeltype);
+                if (modelType == null)
+                {
+                    return BadRequest("Invalid ModelType.");
+                }
+
+                var imageBytes = await FileHelper.ConvertToByteArrayAsync(image);
+
+                var product = new Product
+                {
+                    Name = name,
+                    Description = description,
+                    ModelType = modelType.ModelType,
+                    Image = imageBytes
+                };
+
+                _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
-
-            // Читаем изображение в байтовый массив
-            var imageBytes = await FileHelper.ConvertToByteArrayAsync(image);
-
-            // Создаем объект Product
-            var product = new Product
+            catch (Exception ex)
             {
-                Name = name,
-                Description = description,
-                ModelType = modeltype.ToString(), // Преобразуем в строку для хранения
-                Image = imageBytes
-            };
-
-            // Добавляем в базу данных
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+                _logger.LogError(ex, "Ошибка при создании продукта.");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера." });
+            }
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] ModelType modeltype, IFormFile? image)
+        public async Task<IActionResult> Update(int id, [FromForm] string name, [FromForm] string description, [FromForm] string modelType, IFormFile? image)
         {
-
             var existingProduct = await _context.Products.FindAsync(id);
             if (existingProduct == null)
             {
@@ -111,7 +122,7 @@ namespace Practice.Controllers
 
             existingProduct.Name = name;
             existingProduct.Description = description;
-            existingProduct.ModelType = modeltype.ToString();
+            existingProduct.ModelType = modelType;
 
             _context.Entry(existingProduct).State = EntityState.Modified;
             await _context.SaveChangesAsync();

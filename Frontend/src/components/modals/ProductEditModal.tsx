@@ -1,6 +1,6 @@
-import { Product } from '../../lib/types';
-import { Sheet, SheetContent } from '../ui/sheet';
-import { ProductForm } from '../forms/ProductForm';
+import { Product } from '@/lib/types';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ProductForm } from '@/components/forms/ProductForm';
 
 interface ProductEditModalProps {
   product: Product;
@@ -10,6 +10,7 @@ interface ProductEditModalProps {
   onDelete: () => void;
 }
 
+
 export function ProductEditModal({
   product,
   isOpen,
@@ -17,6 +18,9 @@ export function ProductEditModal({
   onUpdate,
   onDelete,
 }: ProductEditModalProps) {
+
+
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-xl max-h-screen overflow-y-auto w-[95vw]">

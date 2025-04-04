@@ -7,7 +7,7 @@ import os
 bpy.context.scene.render.engine = 'CYCLES'
 
 # Включаем GPU рендеринг
-bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'  # Или 'OPTIX' для новых карт
+bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'OPTIX'  # Или 'OPTIX' для новых карт
 
 # Включаем все доступные CUDA-устройства
 bpy.context.preferences.addons['cycles'].preferences.get_devices()
@@ -64,7 +64,7 @@ if not model:
 print(f"Using model: {model.name}")
 
 # Rendering settings
-bpy.context.scene.cycles.samples = 4
+bpy.context.scene.cycles.samples = 1
 bpy.context.scene.cycles.use_adaptive_sampling = False
 bpy.context.scene.cycles.use_denoising = False
 bpy.context.scene.cycles.use_fast_gi = False
@@ -130,7 +130,7 @@ print(f"Rendering to: {output_path}")
 
 # Render output
 bpy.context.scene.render.filepath = output_path
-bpy.context.scene.render.image_settings.file_format = 'PNG'
+bpy.context.scene.render.image_settings.file_format = 'WEBP'
 bpy.ops.render.render(write_still=True)
 
 print(f"Rendered image saved to {output_path}")

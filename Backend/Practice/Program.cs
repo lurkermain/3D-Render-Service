@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Practice.Helpers;
 using Practice.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
+using Practice.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,11 @@ builder.Services.AddSwaggerGen(c =>
     c.SchemaGeneratorOptions.UseInlineDefinitionsForEnums = true;
     c.SchemaGeneratorOptions.UseAllOfForInheritance = true;
 });
+
+builder.Services.AddTransient<DockerService>();
+// Регистрация FileManager
+builder.Services.AddTransient<FileManager>();
+
 
 builder.Services.AddCors(options =>
 {

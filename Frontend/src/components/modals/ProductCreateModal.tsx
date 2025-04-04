@@ -1,6 +1,6 @@
-import { ProductCreate } from '../../lib/types';
-import { Sheet, SheetContent } from '../ui/sheet';
-import { CreateProductForm } from '../forms/CreateProductForm';
+import { ProductCreate } from '@/lib/types';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { CreateProductForm } from '@/components/forms/CreateProductForm';
 
 interface ProductCreateModalProps {
   isOpen: boolean;
