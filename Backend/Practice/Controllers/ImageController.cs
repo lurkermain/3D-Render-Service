@@ -2,20 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Practice.Configuration;
 using Practice.Models;
-using System;
 using System.Diagnostics;
-using System.Text;
 using Practice.Helpers;
-using Swashbuckle.AspNetCore.Annotations;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel;
-using System.Reflection.Metadata;
-using Docker.DotNet.Models;
-using Docker.DotNet;
 using Practice.Services;
-using Microsoft.Extensions.Logging;
-using System.IO;
-using System.Threading;
 
 namespace Practice.Controllers
 {
@@ -31,10 +20,12 @@ namespace Practice.Controllers
         private readonly ILogger<ImageController> _logger = logger;
         private readonly FileManager _fileManager = fileManager;
         private readonly DockerService _dockerService = dockerService;
-
+        
+        // Получение 3D-модели по ID продукта. Возвращает GLB-файл модели.
         [HttpGet("{id}/model")]
         public async Task<IActionResult> GetModel(int id)
         {
+            // Поиск продукта по id
             var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
@@ -42,6 +33,7 @@ namespace Practice.Controllers
                 return NotFound(new { error = "Продукт не найден." });
             }
 
+            // Поиск модели по типу, совпадающему с типом продукта
             var model = await _context.Blender.FirstOrDefaultAsync(p => p.ModelType != null && p.ModelType == product.ModelType.ToString());
             if (model == null)
             {
@@ -58,7 +50,7 @@ namespace Practice.Controllers
             }
             else
             {
-                // Если это .blend, отправляем запрос в Python-сервис для обработки
+                // Если это .blend, отправляем запрос в Python-сервис для наложения скина и конвертировать в .glb
                 if (product.Image == null || product.Image.Length == 0)
                 {
                     _logger.LogWarning($"Текстура не загружена для продукта с ID {id}.");
@@ -69,35 +61,24 @@ namespace Practice.Controllers
                 string skinPath = _fileManager.SaveFile("/app/skins/", $"skin_{id}.png", product.Image);
                 modelFilePath = _fileManager.GetFilePath("/app/blender_files/", $"model_{id}.glb");
 
+                // Отправка в докер на конвертацию
                 var success = await _dockerService.ApplySkinAndConvertToGlb(id, blendPath, skinPath, modelFilePath);
                 if (!success)
                 {
                     return StatusCode(500, new { error = "Ошибка обработки Blender-модели." });
                 }
             }
-
+            // Существует ли glb файл после обработки
             if (!System.IO.File.Exists(modelFilePath))
             {
                 _logger.LogWarning($"Файл модели {modelFilePath} не найден.");
                 return NotFound(new { error = "Файл модели не найден." });
             }
 
+            // Чтение и возврат GLB-файла как байтов
             byte[] modelBytes = await System.IO.File.ReadAllBytesAsync(modelFilePath);
             return File(modelBytes, "image/png");
         }
-
-        async Task<bool> WaitForFileAsync(string path, int timeoutMs = 10000)
-        {
-            var sw = Stopwatch.StartNew();
-            while (!System.IO.File.Exists(path))
-            {
-                if (sw.ElapsedMilliseconds > timeoutMs)
-                    return false;
-                await Task.Delay(100);
-            }
-            return true;
-        }
-
 
         [HttpGet("models")]
         public async Task<IActionResult> GetModels()
@@ -183,8 +164,6 @@ namespace Practice.Controllers
             }
         }
 
-
-        // Метод для удаления модели из базы данных
         [HttpDelete("{id}/model")]
         public async Task<IActionResult> DeleteModel(int id)
         {

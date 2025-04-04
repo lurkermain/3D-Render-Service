@@ -32,10 +32,10 @@ services:
 
   blender:
     image: linuxserver/blender:latest
-    runtime: nvidia  # Используем NVIDIA runtime
+    runtime: nvidia  
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all  # Делаем все GPU доступными
-      - NVIDIA_DRIVER_CAPABILITIES=all  # Включаем все возможности драйвера
+      - NVIDIA_VISIBLE_DEVICES=all  
+      - NVIDIA_DRIVER_CAPABILITIES=all  
     volumes:
       - ./blender_files:/app/blender_files
       - ./skins:/app/skins
