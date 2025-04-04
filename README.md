@@ -25,10 +25,15 @@
 Для работы со сваггером надо зайти по порту localhost:5000/swagger
 
 Для работы без докера
+
 Скачайте и установите Blender с официального сайта: [Blender Download](https://www.blender.org/download/).
-Убедитесь, что Blender добавлен в окружение, чтобы вы могли запускать скрипты для Blender. Измените класс ImageController чтобы запускать консоль локально а не передавать параметры в докер
+
+Убедитесь, что Blender добавлен в окружение, чтобы вы могли запускать скрипты для Blender. 
+
+Измените класс ImageController чтобы запускать консоль локально
 
 Пример кода
+
 var start = new ProcessStartInfo
                 {
                     FileName = blenderPath,
