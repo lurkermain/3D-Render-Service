@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Practice.Configuration;
 using Practice.Helpers;
@@ -23,7 +22,7 @@ namespace Practice.Controllers
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
-                    ModelType = p.ModelType, // Используем имя типа модели
+                    ModelType = p.ModelType,
                     ImageUrl = Url.Action("GetImage", new { id = p.Id })
                 })
                 .ToListAsync();
@@ -47,7 +46,7 @@ namespace Practice.Controllers
                 Id = product.Id,
                 Name = product.Name,
                 Description = product.Description,
-                ModelType = product.ModelType, // Используем имя типа модели
+                ModelType = product.ModelType, 
                 ImageUrl = Url.Action("GetImage", new { id = product.Id })
             };
 

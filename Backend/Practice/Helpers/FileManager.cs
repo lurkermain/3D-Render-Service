@@ -25,7 +25,7 @@ namespace Practice.Helpers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка при сохранении файла {fileName} в папку {folder}");
-                throw; // Перебросьте исключение, чтобы оно было обработано в контроллере
+                throw; 
             }
         }
 
