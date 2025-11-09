@@ -33,14 +33,3 @@
 
 Измените класс ImageController чтобы запускать консоль локально
 
-Пример кода
-
-var start = new ProcessStartInfo
-                {
-                    FileName = blenderPath,
-                    Arguments = $"-b \"{tempBlenderFilePath}\" -P \"{scriptPath}\" -- \"{tempSkinPath}\" \"{outputPath}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
